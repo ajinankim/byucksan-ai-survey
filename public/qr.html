@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>설문 QR</title>
+<style>
+  :root{--navy:#1F3864;--navy2:#002060;--grey:#808080;--line:#E3E6EC;--bg:#FFFFFF;--text:#1B1F27;color-scheme:light}
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"Malgun Gothic","맑은 고딕",-apple-system,sans-serif;background:var(--bg);
+       color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;
+       padding:24px env(safe-area-inset-top,0px)}
+  .card{text-align:center;max-width:560px;width:100%}
+  .kicker{font-size:12px;letter-spacing:.18em;color:var(--grey);font-weight:800}
+  h1{margin:10px 0 4px;font-size:30px;color:var(--navy2);font-weight:800}
+  .sub{margin:0 0 26px;color:#5B6270;font-size:15px}
+  .qr{display:inline-block;padding:20px;border:2px solid var(--navy);border-radius:16px;background:#fff}
+  .qr img{display:block;width:min(74vw,340px);height:auto}
+  .url{margin-top:18px;font-size:14px;color:var(--navy);word-break:break-all;font-weight:700}
+  .steps{margin-top:26px;font-size:14px;color:#5B6270;line-height:1.7}
+  .links{margin-top:22px;font-size:14px}
+  .links a{color:var(--navy);font-weight:700;text-decoration:none;margin:0 10px}
+  @media print{ .steps,.links{display:none} }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="kicker">BYUCKSAN</div>
+  <h1>임원 AI 사용 현황 설문</h1>
+  <p class="sub">휴대폰 카메라로 QR을 비춰 주세요 · 약 2분 · 익명</p>
+  <div class="qr"><img id="qr" alt="설문 QR 코드"></div>
+  <div class="url" id="url"></div>
+  <div class="steps">
+    ① 카메라 앱을 켜고 QR을 비춥니다<br>
+    ② 나타나는 링크를 누릅니다<br>
+    ③ 8문항에 답하고 제출합니다
+  </div>
+  <div class="links">
+    <a href="/">설문 바로가기</a> · <a href="/stats.html">실시간 결과</a>
+  </div>
+</div>
+<script>
+  const target = location.origin + '/';
+  document.getElementById('url').textContent = target;
+  document.getElementById('qr').src =
+    'https://api.qrserver.com/v1/create-qr-code/?size=600x600&margin=0&data=' +
+    encodeURIComponent(target);
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>설문 결과 — 실시간</title>
+<style>
+  :root{
+    --navy:#1F3864; --navy2:#002060; --red:#C00000; --grey:#808080;
+    --line:#E3E6EC; --bg:#F5F6F8; --card:#FFFFFF; --text:#1B1F27;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg); color:var(--text); font-size:15px; line-height:1.45;
+    padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+  }
+  .wrap{max-width:1100px;margin:0 auto;padding:0 16px 48px}
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;
+         padding:22px 0 14px;border-bottom:2px solid var(--navy)}
+  .kicker{font-size:11px;letter-spacing:.14em;color:var(--grey);font-weight:700}
+  h1{margin:6px 0 0;font-size:22px;font-weight:800;color:var(--navy2)}
+  .total{text-align:right}
+  .total b{display:block;font-size:40px;font-weight:800;color:var(--navy);line-height:1}
+  .total span{font-size:11.5px;color:var(--grey);font-weight:700;letter-spacing:.06em}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--grey);margin-top:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:#2FB344;animation:b 1.6s infinite}
+  @keyframes b{0%,100%{opacity:1}50%{opacity:.25}}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:18px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h2{margin:0 0 3px;font-size:15px;font-weight:700;line-height:1.35}
+  .card .meta{font-size:11.5px;color:var(--grey);margin-bottom:12px}
+  .row{margin:9px 0}
+  .lab{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:4px}
+  .lab .n{font-weight:700;color:var(--navy);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .track{height:11px;background:#E8EBF0;border-radius:99px;overflow:hidden}
+  .fill{height:100%;background:var(--navy);border-radius:99px;transition:width .5s ease}
+  .row.top .fill{background:var(--red)}
+  .row.top .lab .n{color:var(--red)}
+  .cm{margin-top:18px}
+  .cm h2{font-size:15px;margin:0 0 10px;color:var(--navy2)}
+  .cm ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .cm li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--navy);
+         border-radius:8px;padding:10px 12px;font-size:13.5px}
+  .empty{text-align:center;padding:60px 20px;color:var(--grey)}
+  .warn{background:#FFF7E6;border:1px solid #F0D9A8;color:#7A5A12;padding:11px;
+        border-radius:8px;font-size:13px;margin:14px 0}
+  table{width:100%;border-collapse:collapse}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171C; --card:#1C2027; --line:#2C323B; --text:#E8EAEE; --grey:#9AA2AF;
+      color-scheme: dark;
+    }
+    :root:not([data-theme="light"]) h1{color:#9DB8E8}
+    :root:not([data-theme="light"]) .total b{color:#9DB8E8}
+    :root:not([data-theme="light"]) .track{background:#2C323B}
+    :root:not([data-theme="light"]) .lab .n{color:#9DB8E8}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">BYUCKSAN</div>
+      <h1>임원 AI 사용 현황 — 실시간 결과</h1>
+      <div class="live"><span class="dot"></span><span id="upd">연결 중…</span></div>
+    </div>
+    <div class="total"><b id="tot">0</b><span>응답</span></div>
+  </header>
+  <div id="warn"></div>
+  <div class="grid" id="grid"></div>
+  <div class="cm" id="cmbox"></div>
+</div>
+
+<script>
+function pct(n, base){ return base > 0 ? Math.round(n / base * 100) : 0; }
+
+function draw(d){
+  document.getElementById('tot').textContent = d.total;
+  const bk = {sheet:'구글 시트', redis:'Redis', memory:'메모리'}[d.backend] || '';
+  document.getElementById('upd').textContent =
+    '자동 갱신 · ' + new Date().toLocaleTimeString('ko-KR') + (bk ? ' · ' + bk : '');
+
+  document.getElementById('warn').innerHTML = d.persisted ? '' :
+    '<div class="warn">저장소가 연결되지 않아 응답이 유지되지 않습니다. ' +
+    'apps-script/README.md 를 따라 구글 시트를 연결하고 ' +
+    'SHEET_API_URL · SHEET_TOKEN 환경변수를 설정해 주세요.</div>';
+
+  if (!d.total){
+    document.getElementById('grid').innerHTML =
+      '<div class="empty">아직 응답이 없습니다.<br>QR을 스캔해 참여해 주세요.</div>';
+    return;
+  }
+
+  const g = document.getElementById('grid');
+  g.innerHTML = '';
+  d.stats.forEach(s => {
+    const max = Math.max(...s.options.map(o => o.count), 0);
+    const card = document.createElement('div');
+    card.className = 'card';
+    const kind = s.type === 'multi' ? '복수 응답' : '단일 응답';
+    card.innerHTML = `<h2>${s.title}</h2>
+      <div class="meta">${kind} · 응답 ${s.answered}명</div>` +
+      s.options.map(o => {
+        const p = pct(o.count, s.answered);
+        const top = max > 0 && o.count === max ? ' top' : '';
+        return `<div class="row${top}">
+            <div class="lab"><span>${o.label}</span>
+              <span class="n">${o.count}명 · ${p}%</span></div>
+            <div class="track"><div class="fill" style="width:${p}%"></div></div>
+          </div>`;
+      }).join('');
+    g.appendChild(card);
+  });
+
+  const cb = document.getElementById('cmbox');
+  cb.innerHTML = d.comments && d.comments.length
+    ? `<h2>한마디 (${d.comments.length})</h2><ul>` +
+      d.comments.map(c => `<li>${c.replace(/[<>&]/g, m =>
+        ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}</li>`).join('') + '</ul>'
+    : '';
+}
+
+async function tick(){
+  try{
+    const r = await fetch('/api/stats', { cache:'no-store' });
+    draw(await r.json());
+  }catch(e){
+    document.getElementById('upd').textContent = '연결 오류 — 재시도 중';
+  }
+}
+tick();
+setInterval(tick, 4000);
+</script>
+</body>
+</html>

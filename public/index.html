@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>임원 AI 사용 현황 설문</title>
+<style>
+  :root{
+    --navy:#1F3864; --navy2:#002060; --red:#C00000; --grey:#808080;
+    --line:#E3E6EC; --bg:#F5F6F8; --card:#FFFFFF; --text:#1B1F27;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,sans-serif;
+    background:var(--bg); color:var(--text); font-size:15px; line-height:1.5;
+    padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+  }
+  .wrap{max-width:560px;margin:0 auto;padding:0 16px 120px}
+  header{padding:22px 0 14px;border-bottom:2px solid var(--navy)}
+  header .kicker{font-size:11px;letter-spacing:.14em;color:var(--grey);font-weight:700}
+  header h1{margin:6px 0 4px;font-size:20px;font-weight:800;color:var(--navy2)}
+  header p{margin:0;font-size:12.5px;color:#5B6270}
+  .prog{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px}
+  .bar{height:5px;background:#DDE1E8;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--navy);transition:width .25s}
+  .cnt{font-size:11.5px;color:var(--grey);margin-top:5px;font-weight:600}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}
+  .q .no{font-size:11px;font-weight:800;color:var(--red);letter-spacing:.08em}
+  .q h2{margin:5px 0 2px;font-size:16px;font-weight:700;line-height:1.35}
+  .q .hint{margin:6px 0 0;font-size:12px;color:#6B7280;background:#F2F4F7;
+           border-left:3px solid var(--navy);padding:8px 10px;border-radius:4px}
+  .opts{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+  .opt{display:flex;align-items:center;gap:10px;padding:12px 13px;border:1.5px solid var(--line);
+       border-radius:9px;cursor:pointer;background:#fff;transition:.12s;min-height:48px}
+  .opt:active{transform:scale(.99)}
+  .opt input{width:19px;height:19px;accent-color:var(--navy);flex:0 0 auto;margin:0}
+  .opt span{font-size:14.5px}
+  .opt.on{border-color:var(--navy);background:#F0F4FB}
+  .opt.dim{opacity:.45}
+  textarea{width:100%;min-height:76px;border:1.5px solid var(--line);border-radius:9px;
+           padding:11px;font:inherit;font-size:14.5px;resize:vertical}
+  textarea:focus{outline:none;border-color:var(--navy)}
+  .foot{position:fixed;left:0;right:0;bottom:0;background:rgba(245,246,248,.96);
+        border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
+  .foot .in{max-width:560px;margin:0 auto}
+  button{width:100%;padding:15px;border:0;border-radius:10px;background:var(--navy);
+         color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+  button:disabled{background:#AAB1BD;cursor:not-allowed}
+  .done{text-align:center;padding:64px 20px}
+  .done .ic{font-size:46px}
+  .done h2{margin:14px 0 8px;font-size:21px;color:var(--navy2)}
+  .done p{margin:0;color:#5B6270;font-size:14px}
+  .done a{display:inline-block;margin-top:22px;color:var(--navy);font-weight:700;font-size:14px}
+  .err{background:#FDECEC;border:1px solid #F5C2C2;color:#8B1A1A;padding:11px;
+       border-radius:8px;font-size:13px;margin:12px 0}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171C; --card:#1C2027; --line:#2C323B; --text:#E8EAEE; --grey:#9AA2AF;
+      color-scheme: dark;
+    }
+    :root:not([data-theme="light"]) header h1{color:#9DB8E8}
+    :root:not([data-theme="light"]) .opt{background:#1C2027}
+    :root:not([data-theme="light"]) .opt.on{background:#222C40;border-color:#4A6DA8}
+    :root:not([data-theme="light"]) .q .hint{background:#232830;color:#AEB6C2}
+    :root:not([data-theme="light"]) .foot{background:rgba(20,23,28,.96)}
+    :root:not([data-theme="light"]) .bar{background:#2C323B}
+  }
+</style>
+</head>
+<body>
+<div class="wrap" id="app">
+  <header>
+    <div class="kicker">BYUCKSAN</div>
+    <h1>임원 AI 사용 현황</h1>
+    <p>익명 집계 · 약 2분 · 정답이 없는 설문입니다</p>
+  </header>
+  <div class="prog">
+    <div class="bar"><i id="pbar"></i></div>
+    <div class="cnt" id="pcnt">0 / 0</div>
+  </div>
+  <div id="qs"></div>
+  <div id="err"></div>
+</div>
+<div class="foot" id="foot"><div class="in">
+  <button id="send" disabled>제출하기</button>
+</div></div>
+
+<script>
+const state = {};
+let QS = [], CM = null;
+
+function render(){
+  const box = document.getElementById('qs');
+  box.innerHTML = '';
+  QS.forEach((q, i) => {
+    const card = document.createElement('div');
+    card.className = 'q';
+    const hint = q.hint ? `<p class="hint">${q.hint}</p>` : '';
+    card.innerHTML = `<div class="no">Q${i+1}</div><h2>${q.title}</h2>${hint}
+      <div class="opts" id="o_${q.id}"></div>`;
+    box.appendChild(card);
+    const ow = card.querySelector('.opts');
+    q.options.forEach(opt => {
+      const lab = document.createElement('label');
+      lab.className = 'opt';
+      lab.innerHTML =
+        `<input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${opt}">
+         <span>${opt}</span>`;
+      const inp = lab.querySelector('input');
+      inp.addEventListener('change', () => pick(q, opt, inp.checked));
+      ow.appendChild(lab);
+    });
+  });
+  if (CM){
+    const card = document.createElement('div');
+    card.className = 'q';
+    card.innerHTML = `<div class="no">선택</div><h2>${CM.title}</h2>
+      <div class="opts"><textarea id="cm" maxlength="300"
+        placeholder="${CM.placeholder}"></textarea></div>`;
+    box.appendChild(card);
+  }
+  sync();
+}
+
+function pick(q, opt, on){
+  if (q.type === 'multi'){
+    const cur = new Set(state[q.id] || []);
+    on ? cur.add(opt) : cur.delete(opt);
+    if (q.max && cur.size > q.max){ cur.delete(opt); }
+    state[q.id] = [...cur];
+  } else {
+    state[q.id] = opt;
+  }
+  sync();
+}
+
+function sync(){
+  QS.forEach(q => {
+    const v = state[q.id];
+    const wrap = document.getElementById('o_' + q.id);
+    if (!wrap) return;
+    const full = q.type==='multi' && q.max && (v||[]).length >= q.max;
+    wrap.querySelectorAll('.opt').forEach(lab => {
+      const inp = lab.querySelector('input');
+      const on = q.type==='multi' ? (v||[]).includes(inp.value) : v === inp.value;
+      inp.checked = on;
+      lab.classList.toggle('on', on);
+      lab.classList.toggle('dim', full && !on);
+    });
+  });
+  const done = QS.filter(q => {
+    const v = state[q.id];
+    return q.type==='multi' ? (v||[]).length > 0 : Boolean(v);
+  }).length;
+  document.getElementById('pcnt').textContent = `${done} / ${QS.length}`;
+  document.getElementById('pbar').style.width = (done/QS.length*100) + '%';
+  document.getElementById('send').disabled = done === 0;
+}
+
+document.getElementById('send').addEventListener('click', async () => {
+  const btn = document.getElementById('send');
+  btn.disabled = true; btn.textContent = '제출 중…';
+  const cm = document.getElementById('cm');
+  const payload = { ...state, comment: cm ? cm.value : '' };
+  try{
+    const r = await fetch('/api/submit', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || '제출 실패');
+    try{ localStorage.setItem('ai_survey_done', '1'); }catch(e){}
+    document.getElementById('app').innerHTML =
+      `<div class="done"><div class="ic">✅</div>
+       <h2>제출되었습니다</h2>
+       <p>참여해 주셔서 감사합니다.<br>결과는 회의 중 화면으로 공유됩니다.</p>
+       <a href="/stats.html">실시간 결과 보기 →</a></div>`;
+    document.getElementById('foot').style.display = 'none';
+  }catch(e){
+    document.getElementById('err').innerHTML =
+      `<div class="err">제출에 실패했습니다 — ${e.message}<br>잠시 후 다시 시도해 주세요.</div>`;
+    btn.disabled = false; btn.textContent = '다시 제출';
+  }
+});
+
+fetch('/api/config').then(r => r.json()).then(j => {
+  QS = j.questions; CM = j.comment; render();
+}).catch(() => {
+  document.getElementById('err').innerHTML =
+    '<div class="err">문항을 불러오지 못했습니다. 새로고침해 주세요.</div>';
+});
+</script>
+</body>
+</html>
