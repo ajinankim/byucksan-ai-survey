@@ -14,6 +14,10 @@ const REDIS_TOKEN =
 const KEY = "survey:v1:responses";
 const memory = [];
 
+// ── 인메모리 TTL 캐시 (stats 4초 폴링이 Apps Script를 매번 때리는 것 방지)
+//    Vercel 함수 인스턴스가 살아있는 동안만 유효 — 콜드스타트 시엔 재조회.
+const SHEET_CACHE = { t: 0, data: null, TTL: 12000 }; // 12초
+
 export const backend = SHEET_URL && SHEET_TOKEN
   ? "sheet"
   : REDIS_URL && REDIS_TOKEN
@@ -87,14 +91,28 @@ async function redis(cmd) {
 
 // ── 공용 API ────────────────────────────────────────────────
 export async function push(record) {
-  if (backend === "sheet") return await sheetPush(record);
+  if (backend === "sheet") {
+    // 시트 저장 후 읽기 캐시 무효화 (다음 all()이 최신 반영)
+    SHEET_CACHE.t = 0;
+    SHEET_CACHE.data = null;
+    return await sheetPush(record);
+  }
   if (backend === "redis") return await redis(["RPUSH", KEY, JSON.stringify(record)]);
   memory.push(JSON.stringify(record));
   return memory.length;
 }
 
 export async function all() {
-  if (backend === "sheet") return await sheetAll();
+  if (backend === "sheet") {
+    const now = Date.now();
+    if (SHEET_CACHE.data && now - SHEET_CACHE.t < SHEET_CACHE.TTL) {
+      return SHEET_CACHE.data;
+    }
+    const rows = await sheetAll();
+    SHEET_CACHE.t = Date.now();
+    SHEET_CACHE.data = rows;
+    return rows;
+  }
   const raw = backend === "redis" ? await redis(["LRANGE", KEY, 0, -1]) : memory;
   return (raw || [])
     .map((s) => {

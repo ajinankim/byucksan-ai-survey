@@ -112,8 +112,9 @@ function drawLevel(level, total){
 function draw(d){
   document.getElementById('tot').textContent = d.total;
   const bk = {sheet:'구글 시트', redis:'Redis', memory:'메모리'}[d.backend] || '';
-  document.getElementById('upd').textContent =
-    '자동 갱신 · ' + new Date().toLocaleTimeString('ko-KR') + (bk ? ' · ' + bk : '');
+    document.getElementById('upd').textContent =
+      '자동 갱신 · ' + new Date().toLocaleTimeString('ko-KR') + (bk ? ' · ' + bk : '') +
+      (d.stale ? ' · (새로고침 중, 이전 데이터)' : '');
 
   document.getElementById('warn').innerHTML = d.persisted ? '' :
     '<div class="warn">저장소가 연결되지 않아 응답이 유지되지 않습니다. ' +
@@ -160,11 +161,22 @@ function draw(d){
 async function tick(){
   try{
     const r = await fetch('/api/stats', { cache:'no-store' });
-    draw(await r.json());
+    const j = await r.json();
+    if (j && j.total !== undefined){
+      draw(j);
+      lastGood = j; // 완충: 실패 시 직전 정상 데이터 유지
+    } else if (lastGood){
+      draw({ ...lastGood, stale: true });
+    }
   }catch(e){
-    document.getElementById('upd').textContent = '연결 오류 — 재시도 중';
+    if (lastGood){
+      draw({ ...lastGood, stale: true });
+    } else {
+      document.getElementById('upd').textContent = '연결 오류 — 재시도 중';
+    }
   }
 }
+let lastGood = null;
 tick();
 setInterval(tick, 4000);
 </script>
