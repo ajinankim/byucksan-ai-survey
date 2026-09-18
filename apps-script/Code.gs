@@ -8,7 +8,7 @@
  */
 
 // ⚠️ 반드시 바꿀 것. Vercel 환경변수 SHEET_TOKEN 과 같은 값이어야 한다.
-const SECRET = 'CHANGE_ME_1234';
+const SECRET = 'dc8df83459d85718d9aa5cc1';
 
 const SHEET_NAME = 'responses';
 
