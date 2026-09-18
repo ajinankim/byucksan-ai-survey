@@ -22,13 +22,37 @@ export const backend = SHEET_URL && SHEET_TOKEN
 
 export const hasStore = backend !== "memory";
 
+// ── 안정 fetch: 타임아웃 + 재시도 (Apps Script 콜드스타트로 인한 간헐 지연 흡수)
+async function robustFetch(url, init = {}, retries = 2) {
+  const opts = { ...init, redirect: "follow" };
+  let lastErr;
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const res = await Promise.race([
+        fetch(url, opts),
+        new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 20000)),
+      ]);
+      // Apps Script가 첫 요청 시 302 리디렉트를 거치거나 429(스로틀)를 주면 재시도
+      if (res.status === 429 || res.status >= 500) {
+        lastErr = new Error(`retriable ${res.status}`);
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+        continue;
+      }
+      return res;
+    } catch (e) {
+      lastErr = e;
+      await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+    }
+  }
+  throw lastErr || new Error("request failed");
+}
+
 // ── 구글 시트 ────────────────────────────────────────────────
 async function sheetPush(record) {
-  const res = await fetch(SHEET_URL, {
+  const res = await robustFetch(SHEET_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     // Apps Script 웹앱은 리디렉트를 거쳐 응답한다.
-    redirect: "follow",
     body: JSON.stringify({ token: SHEET_TOKEN, ...record }),
   });
   if (!res.ok) throw new Error(`sheet ${res.status}`);
@@ -39,7 +63,7 @@ async function sheetPush(record) {
 
 async function sheetAll() {
   const u = `${SHEET_URL}${SHEET_URL.includes("?") ? "&" : "?"}token=${encodeURIComponent(SHEET_TOKEN)}`;
-  const res = await fetch(u, { redirect: "follow" });
+  const res = await robustFetch(u, { method: "GET" });
   if (!res.ok) throw new Error(`sheet ${res.status}`);
   const j = await res.json();
   if (j.error) throw new Error(`sheet: ${j.error}`);
