@@ -71,12 +71,43 @@
     <div class="total"><b id="tot">0</b><span>응답</span></div>
   </header>
   <div id="warn"></div>
-  <div class="grid" id="grid"></div>
-  <div class="cm" id="cmbox"></div>
+    <div id="levelBox"></div>
+    <div class="grid" id="grid"></div>
+    <div class="cm" id="cmbox"></div>
 </div>
 
 <script>
 function pct(n, base){ return base > 0 ? Math.round(n / base * 100) : 0; }
+
+function drawLevel(level, total){
+  const box = document.getElementById('levelBox');
+  if (!level || !level.counts || !total){
+    box.innerHTML = '';
+    return;
+  }
+  // 응답된 행만 레벨 산출 (tools 등 한 문항이라도 응답된 것)
+  const scored = level.scored || total;
+  // 정렬: 달인→자연인
+  const order = ['달인','활용자','체험자','자연인'];
+  const LV = order.map(k => level.counts[k] !== undefined
+      ? { key:k, count: level.counts[k], emoji: (level.levels||[]).filter(x=>x.key===k)[0]?.emoji || '' }
+      : null).filter(Boolean);
+  const max = Math.max(...LV.map(x=>x.count), 0);
+  box.innerHTML =
+    `<div class="card" style="border:2px solid var(--navy)">
+      <h2>🏅 사용자 레벨 — 자연인 → 달인</h2>
+      <div class="meta">판정 ${scored}명 · 점수 자동 집계</div>` +
+    LV.map(x => {
+      const p = scored > 0 ? Math.round(x.count / scored * 100) : 0;
+      const top = max > 0 && x.count === max ? ' top' : '';
+      return `<div class="row${top}">
+        <div class="lab"><span>${x.emoji} ${x.key}</span>
+          <span class="n">${x.count}명 · ${p}%</span></div>
+        <div class="track"><div class="fill" style="width:${p}%"></div></div>
+      </div>`;
+    }).join('') +
+    `</div>`;
+}
 
 function draw(d){
   document.getElementById('tot').textContent = d.total;
@@ -117,12 +148,14 @@ function draw(d){
   });
 
   const cb = document.getElementById('cmbox');
-  cb.innerHTML = d.comments && d.comments.length
-    ? `<h2>한마디 (${d.comments.length})</h2><ul>` +
-      d.comments.map(c => `<li>${c.replace(/[<>&]/g, m =>
-        ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}</li>`).join('') + '</ul>'
-    : '';
-}
+    cb.innerHTML = d.comments && d.comments.length
+      ? `<h2>한마디 (${d.comments.length})</h2><ul>` +
+        d.comments.map(c => `<li>${c.replace(/[<>&]/g, m =>
+          ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}</li>`).join('') + '</ul>'
+      : '';
+
+    drawLevel(d.level, d.total);
+  }
 
 async function tick(){
   try{

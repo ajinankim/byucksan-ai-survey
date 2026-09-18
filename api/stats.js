@@ -1,5 +1,6 @@
 import { all, hasStore, backend } from "./_store.js";
 import { QUESTIONS } from "./_questions.js";
+import { levelDistribution } from "./_level.js";
 
 export default async function handler(req, res) {
   try {
@@ -35,8 +36,10 @@ export default async function handler(req, res) {
       .map((r) => r.comment)
       .reverse();
 
+    const levelDist = levelDistribution(rows);
+
     res.setHeader("Cache-Control", "no-store");
-    res.status(200).json({ total, stats, comments, persisted: hasStore, backend });
+    res.status(200).json({ total, stats, comments, persisted: hasStore, backend, level: levelDist });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e) });
   }
