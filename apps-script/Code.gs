@@ -37,6 +37,16 @@ function doPost(e) {
     const body = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (body.token !== SECRET) return json_({ error: 'unauthorized' });
 
+    // 데이터 리셋 (회의 시작 전 초기화) — action:"reset" 이면 응답 시트를 비운다
+    if (body.action === 'reset') {
+      const sh = getSheet_();
+      const last = sh.getLastRow();
+      if (last > 1) {
+        sh.deleteRows(2, last - 1); // 헤더(1행) 보존, 응답 전부 삭제
+      }
+      return json_({ ok: true, cleared: last - 1 });
+    }
+
     const record = {
       at: new Date().toISOString(),
       answers: body.answers || {},

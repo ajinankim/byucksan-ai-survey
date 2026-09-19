@@ -23,6 +23,20 @@
   header h1{margin:6px 0 4px;font-size:20px;font-weight:800;color:var(--navy2)}
   header p{margin:0;font-size:12.5px;color:#5B6270}
   .prog{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px}
+  .toolbar{display:flex;gap:10px;margin:12px 0 0}
+  .btn{flex:1;padding:12px 13px;border-radius:9px;font:inherit;font-size:14px;font-weight:700;
+       cursor:pointer;text-align:center;text-decoration:none;border:1.5px solid}
+  .btn.qr{background:var(--navy);border-color:var(--navy);color:#fff}
+  .btn.rst{background:#fff;border-color:#E0A0A0;color:#A03030}
+  .rstWrap{margin-top:2px}
+  .rstConf{background:var(--card);border:1px solid #E0A0A0;border-radius:10px;padding:12px;margin:8px 0 2px}
+  .rstConf p{margin:0 0 10px;font-size:13.5px;color:#5B6270}
+  .rstConf .row2{display:flex;gap:8px}
+  .rstConf button{flex:1;padding:10px;border-radius:8px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
+  .rstConf .ok{background:#C00000;color:#fff;border:0}
+  .rstConf .no2{background:#fff;border:1.5px solid var(--line);color:var(--text)}
+  .rstPin{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;
+          font:inherit;font-size:14px;margin-bottom:8px}
   .bar{height:5px;background:#DDE1E8;border-radius:99px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;background:var(--navy);transition:width .25s}
   .cnt{font-size:11.5px;color:var(--grey);margin-top:5px;font-weight:600}
@@ -76,6 +90,10 @@
     <h1>임원 AI 사용 현황</h1>
     <p>익명 집계 · 약 2분 · 정답이 없는 설문입니다</p>
   </header>
+  <div class="toolbar">
+    <a class="btn qr" href="/qr.html" target="_blank">📱 QR 코드 보기</a>
+    <button class="btn rst" id="resetBtn">🗑️ 데이터 리셋</button>
+  </div>
   <div class="prog">
     <div class="bar"><i id="pbar"></i></div>
     <div class="cnt" id="pcnt">0 / 0</div>
@@ -182,6 +200,53 @@ document.getElementById('send').addEventListener('click', async () => {
     document.getElementById('err').innerHTML =
       `<div class="err">제출에 실패했습니다 — ${e.message}<br>잠시 후 다시 시도해 주세요.</div>`;
     btn.disabled = false; btn.textContent = '다시 제출';
+  }
+});
+
+// ── 데이터 리셋 (관리자 전용) ──────────────────────────────
+// 툴바에 확인 패널을 토글하고, 관리자 핀 입력 후 /api/reset 호출.
+let resetPanelOpen = false;
+const resetBtn = document.getElementById('resetBtn');
+const resetPanel = document.createElement('div');
+resetPanel.className = 'rstWrap';
+resetPanel.innerHTML = `<div class="rstConf">
+    <p>⚠️ <b>응답 데이터를 모두 삭제</b>합니다 (회의 시작 전 초기화용).<br>관리자 핀을 입력하세요.</p>
+    <input type="password" class="rstPin" id="rstPin" placeholder="관리자 핀" autocomplete="off">
+    <div class="row2">
+      <button class="no2" id="rstCancel">취소</button>
+      <button class="ok" id="rstDo">데이터 삭제</button>
+    </div>
+  </div>`;
+resetBtn.parentNode.appendChild(resetPanel);
+resetPanel.style.display = 'none';
+
+resetBtn.addEventListener('click', () => {
+  resetPanelOpen = !resetPanelOpen;
+  resetPanel.style.display = resetPanelOpen ? '' : 'none';
+  if (resetPanelOpen) document.getElementById('rstPin').focus();
+});
+document.getElementById('rstCancel').addEventListener('click', () => {
+  resetPanelOpen = false; resetPanel.style.display = 'none';
+});
+document.getElementById('rstDo').addEventListener('click', async () => {
+  const pin = (document.getElementById('rstPin').value || '').trim();
+  if (!pin) return;
+  const doBtn = document.getElementById('rstDo');
+  doBtn.disabled = true; doBtn.textContent = '삭제 중…';
+  try {
+    const r = await fetch('/api/reset', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + pin },
+    });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.error || '리셋 실패');
+    alert('✅ 응답 ' + (j.cleared ?? 0) + '건 삭제 완료.');
+    resetPanelOpen = false; resetPanel.style.display = 'none';
+  } catch (e) {
+    alert('❌ 실패: ' + (e.message === 'forbidden' ? '핀이 올바르지 않습니다' : e.message));
+  } finally {
+    doBtn.disabled = false; doBtn.textContent = '데이터 삭제';
+    document.getElementById('rstPin').value = '';
   }
 });
 

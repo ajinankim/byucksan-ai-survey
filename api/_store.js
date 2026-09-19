@@ -75,6 +75,29 @@ async function sheetAll() {
   return (j.rows || []).filter((r) => r && r.answers);
 }
 
+// ── 데이터 리셋 (회의 시작 전 초기화, 관리자 전용) ───────────
+const ADMIN_TOKEN = process.env.ADMIN_TOKEN || "";
+export const hasAdminReset = Boolean(ADMIN_TOKEN);
+
+async function sheetReset(adminToken) {
+  if (!ADMIN_TOKEN || adminToken !== ADMIN_TOKEN) {
+    throw new Error("forbidden");
+  }
+  // Apps Script doPost 에 action:"reset" 을 보내 응답 시트를 비운다.
+  const res = await robustFetch(SHEET_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token: SHEET_TOKEN, action: "reset" }),
+  });
+  if (!res.ok) throw new Error(`sheet ${res.status}`);
+  const j = await res.json();
+  if (j.error) throw new Error(`sheet: ${j.error}`);
+  // 읽기 캐시 무효화
+  SHEET_CACHE.t = 0;
+  SHEET_CACHE.data = null;
+  return j;
+}
+
 // ── Redis ───────────────────────────────────────────────────
 async function redis(cmd) {
   const res = await fetch(REDIS_URL, {
@@ -123,4 +146,10 @@ export async function all() {
       }
     })
     .filter(Boolean);
+}
+
+// 데이터 리셋 (관리자 전용) — 구글 시트 backend일 때만
+export async function reset(adminToken) {
+  if (backend !== "sheet") throw new Error("reset only for sheet backend");
+  return await sheetReset(adminToken);
 }
