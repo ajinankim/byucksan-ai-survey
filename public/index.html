@@ -87,7 +87,8 @@
   .opts{display:flex;flex-direction:column;gap:10px}
   .opt{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;
        padding:15px 16px;border:2px solid var(--line);border-radius:13px;cursor:pointer;background:#fff;
-       transition:all .2s cubic-bezier(.4,0,.2,1);min-height:62px;box-shadow:0 2px 4px rgba(0,0,0,.02)}
+       transition:all .2s cubic-bezier(.4,0,.2,1);min-height:62px;box-shadow:0 2px 4px rgba(0,0,0,.02);
+       user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
   .opt:active{transform:scale(.98)}
   .opt input{position:absolute;opacity:0;pointer-events:none}
   .opt .txt{font-size:15px;font-weight:600;color:#334155;line-height:1.45;padding-right:6px}
@@ -249,8 +250,7 @@ function render(){
       const icon = isMulti
         ? `<span class="cbx" aria-hidden="true"></span>`
         : `<span class="ck" aria-hidden="true">●</span>`;
-      opts += `<label class="opt">
-          <input type="${isMulti?'checkbox':'radio'}" name="${q.id}" value="${opt}">
+      opts += `<label class="opt" data-q="${q.id}" data-opt="${opt}">
           <span class="txt">${opt}</span>${icon}
         </label>`;
     });
@@ -260,15 +260,11 @@ function render(){
       </div>
       <div class="opts" id="o_${q.id}">${opts}</div>`;
     box.appendChild(card);
-    // 견고한 클릭 처리: label 클릭 → input 수동 토글 → pick 호출
-    // (input 자체는 시각적으로 숨겨져 있어 브라우저/기기별 change 누락 방지)
+    // input 제거 — 라벨 직접 클릭으로 state 갱신 (가장 견고, 기기 무관)
     card.querySelectorAll('.opt').forEach(lab => {
-      const inp = lab.querySelector('input');
       lab.addEventListener('click', (ev) => {
-        ev.preventDefault();
-        if (q.type === 'multi') inp.checked = !inp.checked;
-        else inp.checked = true; // radio는 클릭 시 항상 선택
-        inp.dispatchEvent(new Event('change', { bubbles: true }));
+        ev.preventDefault(); ev.stopPropagation();
+        pick(q, lab.dataset.opt, true);
       });
     });
   });
@@ -287,12 +283,13 @@ function render(){
 }
 
 function pick(q, opt, on){
-  // Q1(tools)은 어떤 제한·연동 없이 항상 자유 클릭 (사용자 요청)
+  // 문항별 독립 state — Q1(tools)은 max 미지정이라 어떤 제한·연동도 없이 자유 클릭
   if (q.type === 'multi'){
     const cur = new Set(state[q.id] || []);
-    on ? cur.add(opt) : cur.delete(opt);
+    // on=true로 호출되면 toggle (이미 있으면 제거, 없으면 추가)
+    if (on){ cur.has(opt) ? cur.delete(opt) : cur.add(opt); }
+    else cur.delete(opt);
     let warned = false;
-    // 개수 제한은 이 문항에 max가 '명시된 경우에만' 적용 — 문항 간 연동 없음
     if (q.max && cur.size > q.max){ cur.delete(opt); warned = true; }
     state[q.id] = [...cur];
     if (warned) toast(`최대 ${q.max}개까지만 선택할 수 있어요`);
