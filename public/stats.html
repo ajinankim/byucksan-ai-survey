@@ -98,7 +98,9 @@
         .h60{height:60px}.h120{height:120px}.h260{height:260px}
 
         /* progress rows (use etc) */
-        .row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
+        /* Row2: 서비스(2fr) + 빈도/구독(1fr) — 첨부 lg:grid-cols-3 대응 */
+        .row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+        @media(min-width:1024px){.row2{grid-template-columns:2fr 1fr}}
         .row{margin:12px 0}
         .lab{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:5px;align-items:baseline}
         .lab .n{font-weight:800;color:var(--navy);white-space:nowrap;font-variant-numeric:tabular-nums;font-size:13px}
@@ -241,22 +243,63 @@ function row2(stats){
     const by = {}; stats.forEach(s=>by[s.id]=s);
     let html = '';
 
+    /* 서비스 카드 — 가로 바 차트 (Chart.js) */
     if (by.tools){
         html += `<div class="gcard fadein d2" style="grid-column:auto"><h3>💻 현재 쓰고 계신 AI 서비스<span class="sub">복수 응답</span></h3>
           <div class="chart-wrap h260"><canvas id="serviceChart"></canvas></div></div>`;
     }
 
-    const donutCols = [];
-    if (by.freq) donutCols.push(`<div><h4 style="margin:0 0 8px;font-size:14px;font-weight:800;color:#1e293b">⏱️ 사용 빈도</h4>
-        <div class="chart-wrap h120"><canvas id="freqChart"></canvas></div></div>`);
-    if (by.paid) donutCols.push(`<div style="border-top:1px solid #f1f5f9;padding-top:14px"><h4 style="margin:0 0 8px;font-size:14px;font-weight:800;color:#1e293b">💳 유료 구독 여부</h4>
-        <div class="chart-wrap h120"><canvas id="subChart"></canvas></div></div>`);
-    if (donutCols.length){
-        html += `<div class="gcard fadein d3" style="display:flex;flex-direction:column;justify-content:space-between;gap:14px">${donutCols.join('')}</div>`;
+    /* 파생 카드: 사용빈도(순위 막대) + 유료구독(스택바·KPI) — 첨부 인포그래픽 스타일 */
+    const side = [];
+    if (by.freq){
+        const arr = by.freq.options;
+        const max = Math.max(...arr.map(o=>o.count),0);
+        const base = by.freq.answered || max || 1;
+        side.push(`<div>
+            <h4 style="margin:0 0 12px;font-size:13.5px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:6px">⏱️ 사용 빈도</h4>
+            <div style="display:flex;flex-direction:column;gap:11px">
+                ${arr.map(o=>{
+                    const w = max>0 && o.count>0 ? Math.round(o.count/max*100) : 0;
+                    const top = o.count===max && max>0;
+                    return `
+                    <div style="display:flex;align-items:center;gap:10px;${o.count===0?'opacity:.5':''}">
+                        <div style="width:78px;font-size:11.5px;font-weight:${top?800:600};color:${top?'#1e293b':'#64748b'};flex:0 0 auto">${esc(o.label)}</div>
+                        <div style="flex:1;height:9px;background:#f1f5f9;border-radius:99px;overflow:hidden">
+                            <div style="height:100%;background:${top?'#10b981':'#cbd5e1'};border-radius:99px;width:${w}%;box-shadow:${top?'0 0 8px rgba(16,185,129,.5)':'none'};transition:width .6s"></div>
+                        </div>
+                        <div style="width:34px;text-align:right;font-size:11.5px;font-weight:${top?800:600};color:${top?'#059669':'#94a3b8'};flex:0 0 auto">${o.count}명</div>
+                    </div>`;
+                }).join('')}
+            </div>`);
+    }
+    if (by.paid){
+        const arr = by.paid.options;
+        const base = by.paid.answered || Math.max(...arr.map(o=>o.count),0) || 1;
+        // 스택바 색 (회사·개인·무료·사용안함 순)
+        const stackColors = ['#6366f1','#3b82f6','#94a3b8','#cbd5e1'];
+        side.push(`<div style="border-top:1px solid #f1f5f9;padding-top:14px">
+            <h4 style="margin:0 0 10px;font-size:13.5px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:6px">💳 유료 구독 여부</h4>
+            <div style="display:flex;gap:0;height:12px;width:100%;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:14px">
+                ${arr.map((o,i)=>`<div title="${esc(o.label)}: ${o.count}명" style="height:100%;background:${stackColors[i]||'#cbd5e1'};width:${Math.round(o.count/base*100)}%;transition:width .6s"></div>`).join('')}
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                ${arr.map((o,i)=>{
+                    const p = Math.round(o.count/base*100);
+                    const on = o.count>0;
+                    return `
+                    <div style="background:${on?'#eff6ff':'#f8fafc'};padding:8px 10px;border-radius:10px;border:1px solid ${on?'#bfdbfe':'#e2e8f0'};${on?'':'opacity:.6'}">
+                        <div style="font-size:10px;font-weight:700;color:${on?'#3b82f6':'#64748b'};margin-bottom:2px">${esc(o.label)}</div>
+                        <div style="font-size:14px;font-weight:800;color:${on?'#1d4ed8':'#475569'}">${o.count}명 <span style="font-size:10px;font-weight:600;color:${on?'#60a5fa':'#94a3b8'}">${p}%</span></div>
+                    </div>`;
+                }).join('')}
+            </div>`);
+    }
+    if (side.length){
+        html += `<div class="gcard fadein d3" style="display:flex;flex-direction:column;gap:16px">${side.join('')}</div>`;
     }
     box.innerHTML = html;
 
-    // 서비스 바 (첨부 스타일: 최다 항목 강조)
+    // 서비스 바 차트 (최다 항목 네이비 강조)
     if (by.tools){
         const max = Math.max(...by.tools.options.map(o=>o.count),0);
         chart('serviceChart', {
@@ -269,36 +312,6 @@ function row2(stats){
                 scales:{ x:{beginAtZero:true, ticks:{precision:0}, grid:{color:SL}, border:{display:false}},
                          y:{grid:{display:false}, border:{display:false}, ticks:{color:'#475569',font:{weight:'600'}}} },
                 animation:{duration:800, easing:'easeOutQuart'} }
-        });
-    }
-    // freq 도넛
-    if (by.freq){
-        const arr = by.freq.options;
-        const max = Math.max(...arr.map(o=>o.count),0);
-        const selIdx = arr.findIndex(o=>o.count===max && max>0);
-        chart('freqChart', {
-            type:'doughnut',
-            data:{ labels: arr.map(o=>o.label), datasets:[{ data: arr.map(o=>o.count),
-                backgroundColor: arr.map((_,i)=> i===selIdx ? EMERALD : SL), borderWidth:0, hoverOffset:4 }]},
-            options:{ cutout:'70%', plugins:{ legend:{display:false} } },
-            plugins:[{ id:'cFreq', beforeDraw(c){ if(selIdx<0)return; const ctx=c.ctx,W=c.width/2,H=c.height/2;
-                ctx.restore(); ctx.font='700 12px Pretendard'; ctx.fillStyle='#1e293b'; ctx.textAlign='center'; ctx.textBaseline='middle';
-                ctx.fillText(arr[selIdx].label + ' ' + arr[selIdx].count+"명", W, H); ctx.save(); }}]
-        });
-    }
-    // paid 도넛
-    if (by.paid){
-        const arr = by.paid.options;
-        const max = Math.max(...arr.map(o=>o.count),0);
-        const selIdx = arr.findIndex(o=>o.count===max && max>0);
-        chart('subChart', {
-            type:'doughnut',
-            data:{ labels: arr.map(o=>o.label), datasets:[{ data: arr.map(o=>o.count),
-                backgroundColor: arr.map((_,i)=> i===selIdx ? BLUE : SL), borderWidth:0, hoverOffset:4 }]},
-            options:{ cutout:'70%', plugins:{ legend:{display:false} } },
-            plugins:[{ id:'cSub', beforeDraw(c){ if(selIdx<0)return; const ctx=c.ctx,W=c.width/2,H=c.height/2;
-                ctx.restore(); ctx.font='700 11px Pretendard'; ctx.fillStyle='#1e293b'; ctx.textAlign='center'; ctx.textBaseline='middle';
-                ctx.fillText(arr[selIdx].count+"명", W, H); ctx.save(); }}]
         });
     }
 }
