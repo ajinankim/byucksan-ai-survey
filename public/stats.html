@@ -123,10 +123,56 @@
         .cm li{background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);
                border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.6}
         .empty{text-align:center;padding:50px 20px;color:#94a3b8;background:rgba(255,255,255,.6);
-               border-radius:18px;border:2px dashed #cbd5e1;margin-bottom:24px}
-        .empty b{display:block;font-size:17px;color:#475569;margin-bottom:6px}
-        .warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:12px 14px;
-              border-radius:12px;font-size:13.5px;margin-bottom:20px}
+                       border-radius:18px;border:2px dashed #cbd5e1;margin-bottom:24px}
+                .empty b{display:block;font-size:17px;color:#475569;margin-bottom:6px}
+                .warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:12px 14px;
+                      border-radius:12px;font-size:13.5px;margin-bottom:20px}
+
+                /* ── 레벨 기준 팝업 ── */
+                .levelbtn{margin-left:8px;padding:5px 12px;border:1.5px solid var(--line);background:#fff;
+                          color:var(--navy);border-radius:99px;font-size:12px;font-weight:800;cursor:pointer;
+                          transition:all .2s;flex:0 0 auto}
+                .levelbtn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+                .modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+                       background:rgba(15,23,42,.55);backdrop-filter:blur(3px);padding:20px}
+                .modal.show{display:flex}
+                .modal-panel{background:#fff;border-radius:18px;max-width:430px;width:100%;max-height:82vh;
+                             overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:modalIn .25s ease-out}
+                @keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:scale(1)}}
+                .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;
+                            border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
+                .modal-head h3{margin:0;font-size:16px;font-weight:800;color:var(--navy-deep)}
+                .modal-close{cursor:pointer;border:none;background:#f1f5f9;width:30px;height:30px;border-radius:99px;
+                             font-size:15px;color:#64748b;line-height:30px;text-align:center;transition:background .2s}
+                .modal-close:hover{background:#e2e8f0}
+                .modal-body{padding:18px 20px 22px}
+                .crit{margin-bottom:14px;padding:13px 15px;border-radius:12px;background:#f8fafc;border:1px solid #eef2f7}
+                .crit h4{margin:0 0 8px;font-size:13.5px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:6px}
+                .crit p{margin:0;font-size:12.5px;line-height:1.6;color:#475569}
+                .crit p score{display:inline-flex;font-weight:800;color:var(--navy);background:#e8eef8;border-radius:6px;
+                              padding:1px 7px;margin:0 2px}
+                .crit.fastfail{border-color:#fecaca;background:#fef2f2}
+                .crit.fastfail h4{color:#b91c1c}
+                .threshold{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+                .threshold div{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569}
+                .threshold .badge{flex:0 0 auto;min-width:44px;text-align:center;padding:3px 8px;border-radius:8px;
+                                  font-weight:800;font-size:12px}
+                .t1{background:#fef3c7;color:#92400e}.t2{background:#dbeafe;color:#1d4ed8}
+                .t3{background:#dcfce7;color:#15803d}.t4{background:#f3e8ff;color:#7e22ce}
+                @media(prefers-color-scheme:dark){
+                    .levelbtn{background:#1c2027;border-color:#2c323b;color:#9db8e8}
+                    .levelbtn:hover{background:#4a6da8;color:#fff}
+                    .modal-panel{background:#1c2027}
+                    .modal-head{background:#1c2027;border-color:#2c323b}
+                    .modal-head h3{color:#9db8e8}
+                    .modal-close{background:#2c323b;color:#cbd5e1}
+                    .crit{background:#232830;border-color:#2c323b}
+                    .crit h4{color:#f1f5f9}
+                    .crit p{color:#cbd5e1}
+                    .crit p score{background:#2e4a75;color:#93c5fd}
+                    .crit.fastfail{background:#2c1414;border-color:#5c1a1a}
+                    .crit.fastfail h4{color:#fca5a5}
+                }
 
         footer{text-align:center;font-size:12px;color:#94a3b8;padding:20px;
                border-top:1px solid var(--line);background:#fff}
@@ -195,9 +241,20 @@
     <div class="row2" id="row3"></div>
 
     <div class="gcard cm" id="cmbox" style="display:none"></div>
-</main>
+    </main>
 
-<footer>© 2026 Byucksan Corp — 결과는 [🔄 갱신] 버튼으로 최신화</footer>
+    <!-- 레벨 기준 팝업 -->
+    <div class="modal" id="levelModal" onclick="if(event.target===this)closeLevelModal()">
+        <div class="modal-panel">
+            <div class="modal-head">
+                <h3>📏 사용자 레벨 판정 기준</h3>
+                <button class="modal-close" onclick="closeLevelModal()" aria-label="닫기">✕</button>
+            </div>
+            <div class="modal-body" id="levelModalBody"></div>
+        </div>
+    </div>
+
+    <footer>© 2026 Byucksan Corp — 결과는 [🔄 갱신] 버튼으로 최신화</footer>
 
 <script>
 const esc = s => String(s||'').replace(/[<>&]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));
@@ -215,19 +272,61 @@ function drawLevel(level){
     const emoji = k => (level.levels||[]).filter(x=>x.key===k)[0]?.emoji || '';
     const active = order.reduce((a,k)=> level.counts[k]>0 ? k : a, null);
     box.innerHTML = `<div class="gcard fadein d1">
-        <h3>🏅 사용자 레벨 판정<span class="sub">자동 집계</span></h3>
-        <div class="lvgrid">
-          ${order.map(k=>{
-            const c=level.counts[k]||0, p=Math.round(c/scored*100), isOn=active===k;
-            return `<div class="lv ${isOn?'on':''} ${c===0?'zero':''}">
-              <div class="cir" ${isOn?'style="font-size:19px;font-weight:900"':''}>${isOn?'4':meta[k]}</div>
-              <span class="nm"><span class="emoji">${emoji[k]||''}</span> ${k}</span>
-              <span class="ct">${c}명 (${p}%)</span>
-            </div>`;
-          }).join('')}
+            <h3>🏅 사용자 레벨 판정<span class="sub">자동 집계</span><button class="levelbtn" onclick="openLevelModal()">📏 기준 보기</button></h3>
+            <div class="lvgrid">
+              ${order.map(k=>{
+                const c=level.counts[k]||0, p=Math.round(c/scored*100), isOn=active===k;
+                return `<div class="lv ${isOn?'on':''} ${c===0?'zero':''}">
+                  <div class="cir" ${isOn?'style="font-size:19px;font-weight:900"':''}>${isOn?'4':meta[k]}</div>
+                  <span class="nm"><span class="emoji">${emoji[k]||''}</span> ${k}</span>
+                  <span class="ct">${c}명 (${p}%)</span>
+                </div>`;
+              }).join('')}
+            </div>
+          </div>`;
+    }
+
+    /* ── 레벨 기준 팝업 ── */
+    const LEVEL_CRITERIA = `
+      <div class="crit">
+        <h4>1️⃣ 사용 빈도</h4>
+        <p>하루에 여러 번 <score>+5</score> · 하루 1회 정도 <score>+3</score> · 주 2~3회 <score>+2</score> · 주 1회 미만 <score>+1</score></p>
+      </div>
+      <div class="crit fastfail">
+        <h4>⚡ 즉시 자연인</h4>
+        <p>사용 빈도가 <b>거의 안 씀</b>이면 다른 항목과 관계없이 <b>자연인</b>으로 판정됩니다.</p>
+      </div>
+      <div class="crit">
+        <h4>2️⃣ 유료 구독</h4>
+        <p>유료 사용(회사/개인) <score>+3</score> · 무료만 사용 <score>+1</score></p>
+      </div>
+      <div class="crit">
+        <h4>3️⃣ 활용 용도 다양성</h4>
+        <p>3개 이상 <score>+2</score> · 1개 이상 <score>+1</score></p>
+      </div>
+      <div class="crit">
+        <h4>4️⃣ 데이터 입력 적극성</h4>
+        <p>업무자료 외부 입력: 있다 <score>+2</score> · 민감하지 않은 자료만 <score>+1</score></p>
+      </div>
+      <div class="crit">
+        <h4>최종 판정 (총점)</h4>
+        <div class="threshold">
+          <div><span class="badge t4">≥10</span><b>달인 🏆</b></div>
+          <div><span class="badge t3">≥6</span><b>활용자 ⚙️</b></div>
+          <div><span class="badge t2">≥3</span><b>체험자 🔍</b></div>
+          <div><span class="badge t1">&lt;3</span><b>자연인 🍃</b></div>
         </div>
       </div>`;
-}
+
+    function openLevelModal(){
+        const m = document.getElementById('levelModal');
+        document.getElementById('levelModalBody').innerHTML = LEVEL_CRITERIA;
+        m.classList.add('show');
+    }
+    function closeLevelModal(){
+        document.getElementById('levelModal').classList.remove('show');
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLevelModal(); });
 
 /* ── Chart 파괴·재생성 헬퍼 (중복 인스턴스 방지) ── */
 function chart(id, cfg){
