@@ -260,8 +260,16 @@ function render(){
       </div>
       <div class="opts" id="o_${q.id}">${opts}</div>`;
     box.appendChild(card);
-    card.querySelectorAll('input').forEach(inp => {
-      inp.addEventListener('change', () => pick(q, inp.value, inp.checked));
+    // 견고한 클릭 처리: label 클릭 → input 수동 토글 → pick 호출
+    // (input 자체는 시각적으로 숨겨져 있어 브라우저/기기별 change 누락 방지)
+    card.querySelectorAll('.opt').forEach(lab => {
+      const inp = lab.querySelector('input');
+      lab.addEventListener('click', (ev) => {
+        ev.preventDefault();
+        if (q.type === 'multi') inp.checked = !inp.checked;
+        else inp.checked = true; // radio는 클릭 시 항상 선택
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      });
     });
   });
   if (CM){
