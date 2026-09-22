@@ -405,13 +405,23 @@ function toast(msg, ok){
   t._h = setTimeout(() => t.classList.remove('show'), 2600);
 }
 
-/* ── init ───────────────────────────────────── */
-fetch('/api/config').then(r => r.json()).then(j => {
-  QS = j.questions; CM = j.comment; render();
-}).catch(() => {
-  document.getElementById('err').innerHTML =
-    '<div class="err">문항을 불러오지 못했습니다. 새로고침해 주세요.</div>';
-});
+/* ── init (자동 재시도 3회) ─────────────────── */
+async function initApp(tries){
+  try{
+    const r = await fetch('/api/config', { cache:'no-store' });
+    if (!r.ok) throw new Error('HTTP '+r.status);
+    const j = await r.json();
+    QS = j.questions; CM = j.comment; render();
+  }catch(e){
+    if (tries > 0){
+      setTimeout(() => initApp(tries - 1), 1200);
+    } else {
+      document.getElementById('err').innerHTML =
+        '<div class="err">문항을 불러오지 못했습니다. <a href="javascript:location.reload()" style="color:var(--navy);font-weight:800">여기를 눌러 새로고침</a>해 주세요.</div>';
+    }
+  }
+}
+initApp(3);
 </script>
 </body>
 </html>
