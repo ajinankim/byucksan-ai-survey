@@ -4,5 +4,10 @@
   "private": true,
   "type": "module",
   "description": "임원 AI 사용 현황 설문 — QR 참여형 웹앱 + 실시간 통계",
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^25.11.0"
+  }
 }

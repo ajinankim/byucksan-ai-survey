@@ -1,0 +1,24 @@
+import puppeteer from 'puppeteer-core';
+const C = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
+const b = await puppeteer.launch({ executablePath: C, headless: 'new', args: ['--no-sandbox'] });
+const p = await b.newPage();
+await p.setViewport({ width: 430, height: 900 });
+await p.goto('http://localhost:3000/', { waitUntil: 'networkidle2' });
+await p.waitForSelector('.q .opt', { timeout: 12000 });
+const info = await p.evaluate(() => {
+  const q = QS[0];
+  const lab = document.querySelector('#o_tools .opt');
+  const out = {};
+  out.q_max_serialized = JSON.stringify({max: q.max}) ;
+  out.q_max_val = q.max;
+  out.before = lab.className;
+  out.expr = q.type === 'multi' && q.max && (state[q.id] || []).length >= q.max;
+  out.exprType = typeof (q.type === 'multi' && q.max && (state[q.id] || []).length >= q.max);
+  lab.classList.remove('dim');
+  out.afterRemove = lab.className;
+  sync();
+  out.afterSync = lab.className;
+  return out;
+});
+console.log(JSON.stringify(info, null, 2));
+await b.close();

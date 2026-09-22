@@ -309,14 +309,17 @@ function sync(){
     const cur = v || [];
     const full = isMulti && q.max && cur.length >= q.max;
     let answered = false;
+    // dim은 이 문항 자체에 max가 있을 때만. max 미지정(Q1 tools 등)이면 undefined가 되는데,
+    // toggle(force)에 undefined 를 넣으면 '토글'로 동작해 클래스를 오히려 추가하고,
+    // .dim의 pointer-events:none 때문에 클릭이 안 먹는다. 반드시 !!로 boolean 강제.
+    const dim = isMulti && q.max && full;
     wrap.querySelectorAll('.opt').forEach(lab => {
-      const inp = lab.querySelector('input');
-      const on = isMulti ? cur.includes(inp.value) : v === inp.value;
-      inp.checked = on;
+      // input 제거 후에는 라벨의 data-opt 를 사용 (bc2d365 이후 회귀 방지)
+      const val = lab.dataset.opt;
+      const on = isMulti ? cur.includes(val) : v === val;
       if (on) answered = true;
       lab.classList.toggle('on', on);
-      // dim은 이 문항 자체에 max가 있을 때만 — Q1(tools)에는 절대 적용 안 됨
-      lab.classList.toggle('dim', isMulti && q.max && full && !on);
+      lab.classList.toggle('dim', !!(dim && !on));
     });
     if (answered) done++;
   });
@@ -407,11 +410,11 @@ function toast(msg, ok){
 
 /* ── init (자동 재시도 3회) ─────────────────── */
 async function initApp(tries){
+  let j;
   try{
     const r = await fetch('/api/config', { cache:'no-store' });
     if (!r.ok) throw new Error('HTTP '+r.status);
-    const j = await r.json();
-    QS = j.questions; CM = j.comment; render();
+    j = await r.json();
   }catch(e){
     if (tries > 0){
       setTimeout(() => initApp(tries - 1), 1200);
@@ -419,7 +422,11 @@ async function initApp(tries){
       document.getElementById('err').innerHTML =
         '<div class="err">문항을 불러오지 못했습니다. <a href="javascript:location.reload()" style="color:var(--navy);font-weight:800">여기를 눌러 새로고침</a>해 주세요.</div>';
     }
+    return;
   }
+  // 렌더/동기화 오류는 '문항 로드 실패'로 위장시키지 않고 콘솔에 그대로 노출되도록 fetch 밖에서 실행
+  QS = j.questions; CM = j.comment;
+  render();
 }
 initApp(3);
 </script>
