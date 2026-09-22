@@ -16,7 +16,7 @@ SCORES = {
   "tools": {"사용하지 않음": -3, "_per_tool": 1.5},          # 도구당 +1.5, 미사용 -3
   "paid":  {"회사 비용으로 유료 사용": 2, "개인 비용으로 유료 사용": 2, "무료만 사용": 0.5, "사용하지 않음": 0},
   "freq":  {"하루에 여러 번": 3, "하루 1회 정도": 2, "주 2~3회": 1.5, "주 1회 미만": 0.5, "거의 안 씀": 0},
-  "use":   {"문서 작성·초안": 1, "긴 자료 요약": 1.5, "번역·영문": 1, "시장·기업 조사": 1.5,
+  "use":   {"문서 작성·초안": 1, "긴 자료 요약": 1.5, "번역": 1, "시장·기업 조사": 1.5,
             "데이터 분석": 2, "회의록 정리": 1.5, "아이디어 발상": 1},
   "agent": {"잘 알고 직접 쓴다": 3, "개념은 알지만 안 써 봤다": 1.5, "들어는 봤다": 0.5, "처음 듣는다": 0},
   "trust": {"판단이 서지 않음": 0, "초안만 — 검토·실행은 내가": 1, "내부 자료 조회까지": 2,
@@ -44,10 +44,14 @@ def score_answer(answers):
             if t != "사용하지 않음":
                 s += SCORES["tools"]["_per_tool"]
     # 나머지 단일
-    for key in ["paid","freq","agent","trust","data","support"]:
+    for key in ["freq","agent","trust","data","support"]:
         v = answers.get(key)
         if v in SCORES[key]:
             s += SCORES[key][v]
+    # paid (복수 선택) — 선택된 항목 전부 합산
+    for p in (answers.get("paid") or []):
+        if p in SCORES["paid"]:
+            s += SCORES["paid"][p]
     # use (복수, 다용도 가산)
     uses = answers.get("use") or []
     for u in uses:

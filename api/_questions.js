@@ -16,8 +16,9 @@ export const QUESTIONS = [
   },
   {
     id: "paid",
-    type: "single",
+    type: "multi",
     title: "유료 구독 여부",
+    hint: "복수 선택",
     options: [
       "회사 비용으로 유료 사용",
       "개인 비용으로 유료 사용",
@@ -40,7 +41,7 @@ export const QUESTIONS = [
     options: [
       "문서 작성·초안",
       "긴 자료 요약",
-      "번역·영문",
+      "번역",
       "시장·기업 조사",
       "데이터 분석",
       "회의록 정리",
