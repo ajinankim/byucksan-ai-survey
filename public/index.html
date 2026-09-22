@@ -2,108 +2,234 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
 <title>임원 AI 사용 현황 설문</title>
 <style>
   :root{
-    --navy:#1F3864; --navy2:#002060; --red:#C00000; --grey:#808080;
-    --line:#E3E6EC; --bg:#F5F6F8; --card:#FFFFFF; --text:#1B1F27;
+    --navy:#1F3864; --navy-deep:#002060; --navy-light:#3b5b8c;
+    --red:#C00000; --grey:#808080;
+    --line:#E3E6EC; --bg:#F8FAFC; --card:#FFFFFF; --text:#1B1F27;
     color-scheme: light;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
-    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,sans-serif;
-    background:var(--bg); color:var(--text); font-size:15px; line-height:1.5;
+    font-family:"Pretendard","Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,sans-serif;
+    background-color:var(--bg);
+    background-image:radial-gradient(at 0% 0%, hsla(217,100%,95%,1) 0, transparent 50%),
+                     radial-gradient(at 100% 100%, hsla(250,100%,96%,1) 0, transparent 50%);
+    background-attachment:fixed;
+    color:var(--text); font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
     padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
   }
-  .wrap{max-width:560px;margin:0 auto;padding:0 16px 120px}
-  header{padding:22px 0 14px;border-bottom:2px solid var(--navy)}
-  header .kicker{font-size:11px;letter-spacing:.14em;color:var(--grey);font-weight:700}
-  header h1{margin:6px 0 4px;font-size:20px;font-weight:800;color:var(--navy2)}
-  header p{margin:0;font-size:12.5px;color:#5B6270}
-  .prog{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 8px}
-  .toolbar{display:flex;gap:10px;margin:12px 0 0}
-  .btn{flex:1;padding:12px 13px;border-radius:9px;font:inherit;font-size:14px;font-weight:700;
-       cursor:pointer;text-align:center;text-decoration:none;border:1.5px solid}
-  .btn.qr{background:var(--navy);border-color:var(--navy);color:#fff}
-  .btn.rst{background:#fff;border-color:#E0A0A0;color:#A03030}
-  .rstWrap{margin-top:2px}
-  .rstConf{background:var(--card);border:1px solid #E0A0A0;border-radius:10px;padding:12px;margin:8px 0 2px}
-  .rstConf p{margin:0 0 10px;font-size:13.5px;color:#5B6270}
-  .rstConf .row2{display:flex;gap:8px}
-  .rstConf button{flex:1;padding:10px;border-radius:8px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer}
-  .rstConf .ok{background:#C00000;color:#fff;border:0}
-  .rstConf .no2{background:#fff;border:1.5px solid var(--line);color:var(--text)}
-  .rstPin{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:8px;
-          font:inherit;font-size:14px;margin-bottom:8px}
-  .bar{height:5px;background:#DDE1E8;border-radius:99px;overflow:hidden}
-  .bar i{display:block;height:100%;width:0;background:var(--navy);transition:width .25s}
-  .cnt{font-size:11.5px;color:var(--grey);margin-top:5px;font-weight:600}
-  .q{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0}
-  .q .no{font-size:11px;font-weight:800;color:var(--red);letter-spacing:.08em}
-  .q h2{margin:5px 0 2px;font-size:16px;font-weight:700;line-height:1.35}
-  .q .hint{margin:6px 0 0;font-size:12px;color:#6B7280;background:#F2F4F7;
-           border-left:3px solid var(--navy);padding:8px 10px;border-radius:4px}
-  .opts{margin-top:12px;display:flex;flex-direction:column;gap:8px}
-  .opt{display:flex;align-items:center;gap:10px;padding:12px 13px;border:1.5px solid var(--line);
-       border-radius:9px;cursor:pointer;background:#fff;transition:.12s;min-height:48px}
-  .opt:active{transform:scale(.99)}
-  .opt input{width:19px;height:19px;accent-color:var(--navy);flex:0 0 auto;margin:0}
-  .opt span{font-size:14.5px}
-  .opt.on{border-color:var(--navy);background:#F0F4FB}
-  .opt.dim{opacity:.45}
-  textarea{width:100%;min-height:76px;border:1.5px solid var(--line);border-radius:9px;
-           padding:11px;font:inherit;font-size:14.5px;resize:vertical}
-  textarea:focus{outline:none;border-color:var(--navy)}
-  .foot{position:fixed;left:0;right:0;bottom:0;background:rgba(245,246,248,.96);
-        border-top:1px solid var(--line);padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px))}
-  .foot .in{max-width:560px;margin:0 auto}
-  button{width:100%;padding:15px;border:0;border-radius:10px;background:var(--navy);
-         color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
-  button:disabled{background:#AAB1BD;cursor:not-allowed}
-  .done{text-align:center;padding:64px 20px}
-  .done .ic{font-size:46px}
-  .done h2{margin:14px 0 8px;font-size:21px;color:var(--navy2)}
-  .done p{margin:0;color:#5B6270;font-size:14px}
-  .done a{display:inline-block;margin-top:22px;color:var(--navy);font-weight:700;font-size:14px}
-  .err{background:#FDECEC;border:1px solid #F5C2C2;color:#8B1A1A;padding:11px;
-       border-radius:8px;font-size:13px;margin:12px 0}
+  .wrap{max-width:576px;margin:0 auto;min-height:100vh;position:relative;padding:0 16px 130px}
+
+  /* ── Header ─────────────────────────────────────── */
+  header{
+    position:sticky;top:0;z-index:30;margin:0 -16px;padding:20px 16px 16px;
+    background:rgba(255,255,255,.55);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .hrow{display:flex;justify-content:space-between;align-items:flex-start}
+  .kicker{font-size:11px;font-weight:800;letter-spacing:.14em;color:#64748B;text-transform:uppercase}
+  header h1{margin:4px 0 0;font-size:23px;font-weight:800;color:var(--navy-deep);line-height:1.25;letter-spacing:-.01em}
+  .tools{display:flex;gap:8px}
+  .toolbtn{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+    cursor:pointer;text-decoration:none;font-size:17px;border:0;transition:background .15s;
+    box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  .toolbtn.qr{background:#F1F5F9;color:#475569}
+  .toolbtn.qr:hover{background:#E2E8F0}
+  .toolbtn.rst{background:#FEF2F2;color:#DC2626}
+  .toolbtn.rst:hover{background:#FEE2E2}
+  .sub{margin-top:10px;font-size:13px;color:#64748B;font-weight:600;display:flex;align-items:center;gap:6px}
+  .sub .ok{color:#10B981}
+  /* progress */
+  .prog{margin-top:18px}
+  .progrow{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px}
+  .progrow .lab{font-size:12px;font-weight:800;color:var(--navy)}
+  .progrow .cnt{font-size:12px;font-weight:800;color:#94A3B8}
+  .bar{height:6px;background:#E2E8F0;border-radius:99px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;background:var(--navy);border-radius:99px;
+         transition:width .4s cubic-bezier(.4,0,.2,1)}
+  .bar i.full{background:#10B981}
+
+  /* ── Reset admin panel ──────────────────────────── */
+  .rstWrap{padding:8px 0 0;margin-top:4px}
+  .rstConf{position:relative;overflow:hidden;background:#fff;border:2px solid #FEE2E2;border-radius:16px;
+           padding:18px;box-shadow:0 10px 25px rgba(0,0,0,.08);animation:fadeIn .3s ease-out forwards}
+  .rstConf::before{content:"";position:absolute;left:0;top:0;width:4px;height:100%;background:#EF4444}
+  .rstConf .ttl{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-weight:800;color:#1E293B}
+  .rstConf .ttl .ic{width:32px;height:32px;border-radius:99px;background:#FEE2E2;color:#DC2626;
+                    display:flex;align-items:center;justify-content:center;font-size:15px}
+  .rstConf p{margin:0 0 12px;font-size:13.5px;color:#64748B;line-height:1.55}
+  .rstPin{width:100%;padding:12px;background:#F8FAFC;border:1.5px solid #E2E8F0;border-radius:12px;
+          font:inherit;font-size:17px;font-weight:600;letter-spacing:.5em;text-align:center;
+          margin-bottom:12px;outline:none;transition:border .15s,box-shadow .15s;font-family:ui-monospace,monospace}
+  .rstPin:focus{border-color:#F87171;box-shadow:0 0 0 3px #FEE2E2;outline:none}
+  .rstConf .row2{display:flex;gap:10px}
+  .rstConf button{flex:1;padding:12px;border-radius:12px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;transition:.15s}
+  .rstConf .ok{background:#DC2626;color:#fff;border:0;box-shadow:0 4px 12px rgba(220,38,38,.25)}
+  .rstConf .ok:hover{background:#B91C1C}
+  .rstConf .no2{background:#fff;border:1.5px solid #E2E8F0;color:#475569}
+  .rstConf .no2:hover{background:#F8FAFC}
+
+  /* ── Question cards ─────────────────────────────── */
+  main{padding:22px 0 0;display:flex;flex-direction:column;gap:30px}
+  .q{animation:fadeIn .4s ease-out forwards;opacity:0}
+  .qhead{margin-bottom:14px}
+  .qno{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;
+       border-radius:9px;background:var(--navy);color:#fff;font-size:13.5px;font-weight:800;
+       margin-bottom:10px;box-shadow:0 4px 10px rgba(31,56,100,.28)}
+  .q h2{margin:0;font-size:17px;font-weight:800;line-height:1.45;color:#0F172A;letter-spacing:-.01em}
+  .q .hint{margin:10px 0 0;font-size:12px;color:#1E40AF;background:rgba(219,234,254,.55);
+           border:1px solid #BFDBFE;padding:9px 11px;border-radius:10px;display:flex;gap:7px;align-items:flex-start;line-height:1.5}
+  .opts{display:flex;flex-direction:column;gap:10px}
+  .opt{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;
+       padding:15px 16px;border:2px solid var(--line);border-radius:13px;cursor:pointer;background:#fff;
+       transition:all .2s cubic-bezier(.4,0,.2,1);min-height:62px;box-shadow:0 2px 4px rgba(0,0,0,.02)}
+  .opt:active{transform:scale(.98)}
+  .opt input{position:absolute;opacity:0;pointer-events:none}
+  .opt .txt{font-size:15px;font-weight:600;color:#334155;line-height:1.45;padding-right:6px}
+  /* single: 우측 체크아이콘 */
+  .opt .ck{width:24px;height:24px;flex:0 0 auto;color:var(--navy);opacity:0;transform:scale(.5);transition:all .2s ease;font-size:20px;line-height:1}
+  /* multi: 체크박스 */
+  .opt .cbx{width:21px;height:21px;border-radius:6px;flex:0 0 auto;background:#fff;
+            border:2px solid #CBD5E1;display:flex;align-items:center;justify-content:center;
+            color:#fff;font-size:12px;font-weight:900;transition:all .2s ease}
+  .opt.on{border-color:var(--navy);background:#F0F4FB;box-shadow:0 4px 14px rgba(31,56,100,.13);transform:none}
+  .opt.on:active{transform:scale(.98)}
+  .opt.on .ck{opacity:1;transform:scale(1)}
+  .opt.on .cbx{background:var(--navy);border-color:var(--navy)}
+  .opt.dim{opacity:.42;pointer-events:none}
+  textarea{width:100%;min-height:104px;border:1.5px solid #E2E8F0;border-radius:13px;
+           padding:14px;font:inherit;font-size:14.5px;resize:vertical;background:#fff;
+           color:#334155;transition:border .15s,box-shadow .15s,background .15s}
+  textarea::placeholder{color:#94A3B8}
+  textarea:focus{outline:none;border-color:var(--navy);background:#F8FAFC;
+                 box-shadow:0 0 0 3px rgba(31,56,100,.1)}
+  .cmhead{border-top:2px dashed #E2E8F0;padding-top:22px;margin-top:8px}
+  .cmhead .optlab{display:block;font-size:11px;font-weight:800;letter-spacing:.12em;
+                  color:#94A3B8;text-transform:uppercase;margin-bottom:6px}
+
+  /* ── Footer submit ──────────────────────────────── */
+  .foot{position:fixed;left:0;right:0;bottom:0;z-index:40;
+        background:rgba(255,255,255,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+        border-top:1px solid var(--line);
+        padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px));
+        box-shadow:0 -10px 25px rgba(0,0,0,.04)}
+  .foot .in{max-width:576px;margin:0 auto}
+  .foot button{width:100%;padding:16px;border:0;border-radius:14px;background:var(--navy);
+        color:#fff;font:inherit;font-size:17px;font-weight:800;cursor:pointer;transition:.15s;
+        box-shadow:0 6px 18px rgba(31,56,100,.32);display:flex;align-items:center;justify-content:center;gap:8px}
+  .foot button:hover:not(:disabled){background:var(--navy-deep)}
+  .foot button:disabled{background:#CBD5E1;color:#94A3B8;cursor:not-allowed;box-shadow:none}
+
+  /* ── Done screen ────────────────────────────────── */
+  /* done ring */
+  .done .ring{position:absolute;inset:0;border-radius:99px;background:#D1FAE5;
+              animation:ringPulse 1.8s cubic-bezier(.4,0,.6,1) infinite}
+  .done .ic{position:relative;z-index:1;width:80px;height:80px;border-radius:99px;background:#D1FAE5;
+            display:flex;align-items:center;justify-content:center;font-size:38px;color:#059669;font-weight:800}
+  .done h2{margin:0 0 10px;font-size:24px;font-weight:800;color:var(--navy-deep)}
+  .done p{margin:0;color:#64748B;font-size:15px;line-height:1.65}
+  .done a{display:flex;align-items:center;justify-content:center;gap:8px;margin:26px auto 0;
+          max-width:320px;padding:15px 20px;background:#fff;border:2px solid var(--navy);
+          color:var(--navy);font-weight:800;font-size:15px;border-radius:13px;text-decoration:none;transition:.15s}
+  .done a:hover{background:#F8FAFC}
+  @keyframes ringPulse{0%{transform:scale(1);opacity:.65}100%{transform:scale(1.5);opacity:0}}
+
+  .err{background:#FEE2E2;border:1px solid #FCA5A5;color:#991B1B;padding:12px 14px;
+       border-radius:12px;font-size:13.5px;margin:14px 0;line-height:1.55}
+
+  /* toast */
+  .toast{position:fixed;top:76px;left:50%;transform:translate(-50%,-40px);opacity:0;transition:all .3s;
+         background:#1E293B;color:#fff;padding:12px 20px;border-radius:99px;box-shadow:0 12px 30px rgba(0,0,0,.25);
+         z-index:50;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;
+         pointer-events:none;width:max-content;max-width:90vw}
+  .toast.show{transform:translate(-50%,0);opacity:1}
+
+  /* skeleton */
+  .skl{display:flex;flex-direction:column;gap:16px;padding-top:8px}
+  .skl div{background:#E2E8F0;border-radius:10px;animation:shim 1.2s infinite}
+  @keyframes shim{0%,100%{opacity:.55}50%{opacity:1}}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-8px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#14171C; --card:#1C2027; --line:#2C323B; --text:#E8EAEE; --grey:#9AA2AF;
-      color-scheme: dark;
+      --bg:#14171C; --card:#1C2027; --line:#2C323B; --text:#E8EAEE; color-scheme:dark;
     }
+    :root:not([data-theme="light"]) body{background-color:#14171C;
+      background-image:radial-gradient(at 0% 0%, hsla(221,45%,14%,1) 0, transparent 50%),
+                       radial-gradient(at 100% 100%, hsla(250,35%,15%,1) 0, transparent 50%)}
+    :root:not([data-theme="light"]) header{background:rgba(20,23,28,.65)}
     :root:not([data-theme="light"]) header h1{color:#9DB8E8}
-    :root:not([data-theme="light"]) .opt{background:#1C2027}
-    :root:not([data-theme="light"]) .opt.on{background:#222C40;border-color:#4A6DA8}
-    :root:not([data-theme="light"]) .q .hint{background:#232830;color:#AEB6C2}
-    :root:not([data-theme="light"]) .foot{background:rgba(20,23,28,.96)}
+    :root:not([data-theme="light"]) .q h2{color:#F1F5F9}
+    :root:not([data-theme="light"]) .opt{background:#1C2027;border-color:#2C323B;box-shadow:none}
+    :root:not([data-theme="light"]) .opt .txt{color:#D7DCE3}
+    :root:not([data-theme="light"]) .opt.on{background:#1E2940;border-color:#4A6DA8}
+    :root:not([data-theme="light"]) .opt .cbx{background:#1C2027;border-color:#3B4451}
+    :root:not([data-theme="light"]) .q .hint{background:#1E2430;border-color:#2E3A50;color:#AEB6C2}
+    :root:not([data-theme="light"]) textarea{background:#1C2027;border-color:#2C323B;color:#E8EAEE}
+    :root:not([data-theme="light"]) .foot{background:rgba(17,20,26,.92)}
     :root:not([data-theme="light"]) .bar{background:#2C323B}
+    :root:not([data-theme="light"]) .bar i{background:#5B7CB8}
+    :root:not([data-theme="light"]) .bar i.full{background:#10B981}
+    :root:not([data-theme="light"]) .rstConf{background:#1C2027;border-color:#7F1D1D}
+    :root:not([data-theme="light"]) .rstPin{background:#14171C;border-color:#2C323B;color:#E8EAEE}
+    :root:not([data-theme="light"]) .rstConf .no2{background:#1C2027;border-color:#3B4451;color:#CBD5E1}
+    :root:not([data-theme="light"]) .qno{box-shadow:0 4px 10px rgba(0,0,0,.4)}
   }
 </style>
 </head>
 <body>
 <div class="wrap" id="app">
   <header>
-    <div class="kicker">BYUCKSAN</div>
-    <h1>임원 AI 사용 현황</h1>
-    <p>익명 집계 · 약 2분 · 정답이 없는 설문입니다</p>
+    <div class="hrow">
+      <div>
+        <div class="kicker">BYUCKSAN CORPORATION</div>
+        <h1>임원 AI 사용 현황</h1>
+      </div>
+      <div class="tools">
+        <a class="toolbtn qr" href="/qr.html" target="_blank" title="QR 코드 보기">▦</a>
+        <button class="toolbtn rst" id="resetBtn" title="데이터 리셋">🗑</button>
+      </div>
+    </div>
+    <p class="sub"><span class="ok">🛡</span> 익명 집계 · 소요시간 약 2분</p>
+    <div class="prog">
+      <div class="progrow"><span class="lab">진행률</span><span class="cnt" id="pcnt">0 / 0</span></div>
+      <div class="bar"><i id="pbar"></i></div>
+    </div>
   </header>
-  <div class="toolbar">
-    <a class="btn qr" href="/qr.html" target="_blank">📱 QR 코드 보기</a>
-    <button class="btn rst" id="resetBtn">🗑️ 데이터 리셋</button>
+
+  <div id="resetPanel" style="display:none">
+    <div class="rstConf">
+      <div class="ttl"><span class="ic">⚠️</span><b>응답 데이터 초기화</b></div>
+      <p>회의 시작 전 기존 응답 데이터를 모두 삭제합니다.<br>관리자 PIN 번호를 입력해 주세요.</p>
+      <input type="password" class="rstPin" id="rstPin" placeholder="••••" autocomplete="off">
+      <div class="row2">
+        <button class="no2" id="rstCancel">취소</button>
+        <button class="ok" id="rstDo">데이터 삭제</button>
+      </div>
+    </div>
   </div>
-  <div class="prog">
-    <div class="bar"><i id="pbar"></i></div>
-    <div class="cnt" id="pcnt">0 / 0</div>
-  </div>
-  <div id="qs"></div>
+
+  <main id="qs">
+    <div class="skl">
+      <div style="height:26px;width:28%"></div>
+      <div style="height:32px;width:76%"></div>
+      <div style="height:64px;margin-top:10px"></div>
+      <div style="height:64px"></div>
+    </div>
+  </main>
   <div id="err"></div>
 </div>
+
 <div class="foot" id="foot"><div class="in">
   <button id="send" disabled>제출하기</button>
 </div></div>
+
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
 
 <script>
 const state = {};
@@ -115,27 +241,37 @@ function render(){
   QS.forEach((q, i) => {
     const card = document.createElement('div');
     card.className = 'q';
-    const hint = q.hint ? `<p class="hint">${q.hint}</p>` : '';
-    card.innerHTML = `<div class="no">Q${i+1}</div><h2>${q.title}</h2>${hint}
-      <div class="opts" id="o_${q.id}"></div>`;
-    box.appendChild(card);
-    const ow = card.querySelector('.opts');
+    card.style.animationDelay = (i * 0.08) + 's';
+    const isMulti = q.type === 'multi';
+    const hint = q.hint ? `<p class="hint">💡 ${q.hint}</p>` : '';
+    let opts = '';
     q.options.forEach(opt => {
-      const lab = document.createElement('label');
-      lab.className = 'opt';
-      lab.innerHTML =
-        `<input type="${q.type==='multi'?'checkbox':'radio'}" name="${q.id}" value="${opt}">
-         <span>${opt}</span>`;
-      const inp = lab.querySelector('input');
-      inp.addEventListener('change', () => pick(q, opt, inp.checked));
-      ow.appendChild(lab);
+      const icon = isMulti
+        ? `<span class="cbx" aria-hidden="true"></span>`
+        : `<span class="ck" aria-hidden="true">●</span>`;
+      opts += `<label class="opt">
+          <input type="${isMulti?'checkbox':'radio'}" name="${q.id}" value="${opt}">
+          <span class="txt">${opt}</span>${icon}
+        </label>`;
+    });
+    card.innerHTML = `<div class="qhead">
+        <span class="qno">Q${i+1}</span>
+        <h2>${q.title}</h2>${hint}
+      </div>
+      <div class="opts" id="o_${q.id}">${opts}</div>`;
+    box.appendChild(card);
+    card.querySelectorAll('input').forEach(inp => {
+      inp.addEventListener('change', () => pick(q, inp.value, inp.checked));
     });
   });
   if (CM){
     const card = document.createElement('div');
-    card.className = 'q';
-    card.innerHTML = `<div class="no">선택</div><h2>${CM.title}</h2>
-      <div class="opts"><textarea id="cm" maxlength="300"
+    card.className = 'q cmhead';
+    card.style.animationDelay = (QS.length * 0.08) + 's';
+    card.innerHTML = `<div class="optlab"><span class="optlab-line">OPTIONAL</span></div>
+      <span class="optlab" style="display:none"></span>
+      <h2 style="font-size:15.5px">${CM.title}</h2>
+      <div style="margin-top:12px"><textarea id="cm" maxlength="300"
         placeholder="${CM.placeholder}"></textarea></div>`;
     box.appendChild(card);
   }
@@ -146,8 +282,10 @@ function pick(q, opt, on){
   if (q.type === 'multi'){
     const cur = new Set(state[q.id] || []);
     on ? cur.add(opt) : cur.delete(opt);
-    if (q.max && cur.size > q.max){ cur.delete(opt); }
+    let warned = false;
+    if (q.max && cur.size > q.max){ cur.delete(opt); warned = true; }
     state[q.id] = [...cur];
+    if (warned) toast(`최대 ${q.max}개까지만 선택할 수 있어요`);
   } else {
     state[q.id] = opt;
   }
@@ -155,31 +293,36 @@ function pick(q, opt, on){
 }
 
 function sync(){
+  let done = 0;
   QS.forEach(q => {
     const v = state[q.id];
     const wrap = document.getElementById('o_' + q.id);
     if (!wrap) return;
-    const full = q.type==='multi' && q.max && (v||[]).length >= q.max;
+    const isMulti = q.type === 'multi';
+    const cur = v || [];
+    const full = isMulti && q.max && cur.length >= q.max;
+    let answered = false;
     wrap.querySelectorAll('.opt').forEach(lab => {
       const inp = lab.querySelector('input');
-      const on = q.type==='multi' ? (v||[]).includes(inp.value) : v === inp.value;
+      const on = isMulti ? cur.includes(inp.value) : v === inp.value;
       inp.checked = on;
+      if (on) answered = true;
       lab.classList.toggle('on', on);
-      lab.classList.toggle('dim', full && !on);
+      lab.classList.toggle('dim', isMulti && full && !on);
     });
+    if (answered) done++;
   });
-  const done = QS.filter(q => {
-    const v = state[q.id];
-    return q.type==='multi' ? (v||[]).length > 0 : Boolean(v);
-  }).length;
   document.getElementById('pcnt').textContent = `${done} / ${QS.length}`;
-  document.getElementById('pbar').style.width = (done/QS.length*100) + '%';
+  const bar = document.getElementById('pbar');
+  const pct = QS.length ? (done/QS.length*100) : 0;
+  bar.style.width = pct + '%';
+  bar.classList.toggle('full', pct === 100);
   document.getElementById('send').disabled = done === 0;
 }
 
 document.getElementById('send').addEventListener('click', async () => {
   const btn = document.getElementById('send');
-  btn.disabled = true; btn.textContent = '제출 중…';
+  btn.disabled = true; btn.innerHTML = '제출 중…';
   const cm = document.getElementById('cm');
   const payload = { ...state, comment: cm ? cm.value : '' };
   try{
@@ -191,11 +334,17 @@ document.getElementById('send').addEventListener('click', async () => {
     if (!r.ok) throw new Error(j.error || '제출 실패');
     try{ localStorage.setItem('ai_survey_done', '1'); }catch(e){}
     document.getElementById('app').innerHTML =
-      `<div class="done"><div class="ic">✅</div>
-       <h2>제출되었습니다</h2>
-       <p>참여해 주셔서 감사합니다.<br>결과는 회의 중 화면으로 공유됩니다.</p>
-       <a href="/stats.html">실시간 결과 보기 →</a></div>`;
+      `<div class="done">
+        <div style="position:relative;width:80px;height:80px;margin:0 auto 22px">
+          <span class="ring"></span>
+          <div class="ic">✓</div>
+        </div>
+        <h2 style="margin:0 0 10px;font-size:24px;color:var(--navy-deep)">설문 제출 완료</h2>
+        <p style="margin:0;color:#64748B;font-size:15px;line-height:1.65">
+          임원님의 귀중한 의견에 감사드립니다.<br>집계된 결과는 회의 중 대시보드로 공유됩니다.</p>
+        <a href="/stats.html">📊 실시간 결과 대시보드 보기</a></div>`;
     document.getElementById('foot').style.display = 'none';
+    try{ localStorage.setItem('ai_survey_done', '1'); }catch(e){}
   }catch(e){
     document.getElementById('err').innerHTML =
       `<div class="err">제출에 실패했습니다 — ${e.message}<br>잠시 후 다시 시도해 주세요.</div>`;
@@ -203,23 +352,10 @@ document.getElementById('send').addEventListener('click', async () => {
   }
 });
 
-// ── 데이터 리셋 (관리자 전용) ──────────────────────────────
-// 툴바에 확인 패널을 토글하고, 관리자 핀 입력 후 /api/reset 호출.
+/* ── 관리자 리셋 ─────────────────────────────── */
 let resetPanelOpen = false;
 const resetBtn = document.getElementById('resetBtn');
-const resetPanel = document.createElement('div');
-resetPanel.className = 'rstWrap';
-resetPanel.innerHTML = `<div class="rstConf">
-    <p>⚠️ <b>응답 데이터를 모두 삭제</b>합니다 (회의 시작 전 초기화용).<br>관리자 핀을 입력하세요.</p>
-    <input type="password" class="rstPin" id="rstPin" placeholder="관리자 핀" autocomplete="off">
-    <div class="row2">
-      <button class="no2" id="rstCancel">취소</button>
-      <button class="ok" id="rstDo">데이터 삭제</button>
-    </div>
-  </div>`;
-resetBtn.parentNode.appendChild(resetPanel);
-resetPanel.style.display = 'none';
-
+const resetPanel = document.getElementById('resetPanel');
 resetBtn.addEventListener('click', () => {
   resetPanelOpen = !resetPanelOpen;
   resetPanel.style.display = resetPanelOpen ? '' : 'none';
@@ -227,10 +363,11 @@ resetBtn.addEventListener('click', () => {
 });
 document.getElementById('rstCancel').addEventListener('click', () => {
   resetPanelOpen = false; resetPanel.style.display = 'none';
+  document.getElementById('rstPin').value = '';
 });
 document.getElementById('rstDo').addEventListener('click', async () => {
   const pin = (document.getElementById('rstPin').value || '').trim();
-  if (!pin) return;
+  if (!pin){ toast('관리자 PIN을 입력해 주세요'); document.getElementById('rstPin').focus(); return; }
   const doBtn = document.getElementById('rstDo');
   doBtn.disabled = true; doBtn.textContent = '삭제 중…';
   try {
@@ -240,16 +377,27 @@ document.getElementById('rstDo').addEventListener('click', async () => {
     });
     const j = await r.json();
     if (!r.ok) throw new Error(j.error || '리셋 실패');
-    alert('✅ 응답 ' + (j.cleared ?? 0) + '건 삭제 완료.');
+    toast(`응답 ${j.cleared ?? 0}건 삭제 완료되었습니다`, true);
     resetPanelOpen = false; resetPanel.style.display = 'none';
   } catch (e) {
-    alert('❌ 실패: ' + (e.message === 'forbidden' ? '핀이 올바르지 않습니다' : e.message));
+    toast(e.message === 'forbidden' ? 'PIN이 올바르지 않습니다' : '실패: ' + e.message, false);
   } finally {
     doBtn.disabled = false; doBtn.textContent = '데이터 삭제';
     document.getElementById('rstPin').value = '';
   }
 });
 
+/* ── toast ──────────────────────────────────── */
+let toastTimer = null;
+function toast(msg, ok){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = (ok ? '✓ ' : '⚠️ ') + msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+/* ── init ───────────────────────────────────── */
 fetch('/api/config').then(r => r.json()).then(j => {
   QS = j.questions; CM = j.comment; render();
 }).catch(() => {
