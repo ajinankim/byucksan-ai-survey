@@ -279,10 +279,12 @@ function render(){
 }
 
 function pick(q, opt, on){
+  // Q1(tools)은 어떤 제한·연동 없이 항상 자유 클릭 (사용자 요청)
   if (q.type === 'multi'){
     const cur = new Set(state[q.id] || []);
     on ? cur.add(opt) : cur.delete(opt);
     let warned = false;
+    // 개수 제한은 이 문항에 max가 '명시된 경우에만' 적용 — 문항 간 연동 없음
     if (q.max && cur.size > q.max){ cur.delete(opt); warned = true; }
     state[q.id] = [...cur];
     if (warned) toast(`최대 ${q.max}개까지만 선택할 수 있어요`);
@@ -308,7 +310,8 @@ function sync(){
       inp.checked = on;
       if (on) answered = true;
       lab.classList.toggle('on', on);
-      lab.classList.toggle('dim', isMulti && full && !on);
+      // dim은 이 문항 자체에 max가 있을 때만 — Q1(tools)에는 절대 적용 안 됨
+      lab.classList.toggle('dim', isMulti && q.max && full && !on);
     });
     if (answered) done++;
   });

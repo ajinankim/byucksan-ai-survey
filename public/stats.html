@@ -2,178 +2,372 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>설문 결과 — 실시간</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>BYUCKSAN 임원 AI 사용 현황 — 실시간 결과</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
 <style>
   :root{
-    --navy:#1F3864; --navy2:#002060; --red:#C00000; --grey:#808080;
-    --line:#E3E6EC; --bg:#F5F6F8; --card:#FFFFFF; --text:#1B1F27;
+    --navy:#1F3864; --navy-deep:#002060; --navy-light:#3b5b8c;
+    --red:#C00000; --grey:#808080;
+    --line:#E2E8F0; --bg:#F1F5F9; --card:#FFFFFF; --text:#1E293B;
+    --blue:#3B82F6; --emerald:#10B981; --amber:#F59E0B; --indigo:#6366F1;
     color-scheme: light;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
   body{
-    font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,sans-serif;
-    background:var(--bg); color:var(--text); font-size:15px; line-height:1.45;
-    padding: env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px);
+    font-family:"Pretendard","Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,sans-serif;
+    background-color:var(--bg);
+    background-image:radial-gradient(at 0% 0%, hsla(217,100%,95%,1) 0, transparent 50%),
+                     radial-gradient(at 100% 100%, hsla(210,100%,97%,1) 0, transparent 50%);
+    background-attachment:fixed;
+    color:var(--text); font-size:15px; line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh; display:flex; flex-direction:column;
   }
-  .wrap{max-width:1100px;margin:0 auto;padding:0 16px 48px}
-  header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;
-         padding:22px 0 14px;border-bottom:2px solid var(--navy)}
-  .kicker{font-size:11px;letter-spacing:.14em;color:var(--grey);font-weight:700}
-  h1{margin:6px 0 0;font-size:22px;font-weight:800;color:var(--navy2)}
-  .total{text-align:right}
-  .total b{display:block;font-size:40px;font-weight:800;color:var(--navy);line-height:1}
-  .total span{font-size:11.5px;color:var(--grey);font-weight:700;letter-spacing:.06em}
-  .live{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--grey);margin-top:6px}
-  .dot{width:7px;height:7px;border-radius:50%;background:#2FB344;animation:b 1.6s infinite}
-  @keyframes b{0%,100%{opacity:1}50%{opacity:.25}}
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-top:18px}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
-  .card h2{margin:0 0 3px;font-size:15px;font-weight:700;line-height:1.35}
-  .card .meta{font-size:11.5px;color:var(--grey);margin-bottom:12px}
-  .row{margin:9px 0}
-  .lab{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:4px}
-  .lab .n{font-weight:700;color:var(--navy);white-space:nowrap;font-variant-numeric:tabular-nums}
-  .track{height:11px;background:#E8EBF0;border-radius:99px;overflow:hidden}
-  .fill{height:100%;background:var(--navy);border-radius:99px;transition:width .5s ease}
-  .row.top .fill{background:var(--red)}
-  .row.top .lab .n{color:var(--red)}
-  .cm{margin-top:18px}
-  .cm h2{font-size:15px;margin:0 0 10px;color:var(--navy2)}
-  .cm ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-  .cm li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--navy);
-         border-radius:8px;padding:10px 12px;font-size:13.5px}
-  .empty{text-align:center;padding:60px 20px;color:var(--grey)}
-  .warn{background:#FFF7E6;border:1px solid #F0D9A8;color:#7A5A12;padding:11px;
-        border-radius:8px;font-size:13px;margin:14px 0}
-  table{width:100%;border-collapse:collapse}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:10px}
+
+  /* ── Header nav ───────────────────────────────── */
+  nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);
+      backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.03)}
+  .navin{max-width:1120px;margin:0 auto;padding:0 20px;height:64px;display:flex;
+         justify-content:space-between;align-items:center}
+  .brand{display:flex;align-items:center;gap:12px}
+  .bslogo{width:36px;height:36px;border-radius:10px;background:var(--navy);color:#fff;
+          display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;
+          letter-spacing:-.05em;box-shadow:0 3px 8px rgba(31,56,100,.3)}
+  .bs-t{font-size:16px;font-weight:800;color:var(--navy-deep);line-height:1.25;letter-spacing:-.01em;margin:0}
+  .bs-s{font-size:11px;color:#64748B;font-weight:600;margin:1px 0 0;display:flex;align-items:center;gap:4px}
+  .live{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:99px;
+        background:#FEF2F2;color:#DC2626;font-size:12px;font-weight:800;border:1px solid #FECACA}
+  .live .dot{width:8px;height:8px;border-radius:50%;background:#EF4444;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.85)}}
+  .smh{display:none}
+  @media(min-width:640px){.smh{display:inline}}
+
+  main{flex:1;max-width:1120px;width:100%;margin:0 auto;padding:28px 20px 40px}
+
+  .fadein{animation:fadeIn .6s cubic-bezier(.16,1,.3,1) forwards;opacity:0}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
+  .d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}.d4{animation-delay:.32s}
+
+  /* ── Summary header ───────────────────────────── */
+  .sumrow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;
+          gap:16px;margin-bottom:24px}
+  .sumrow h2{margin:0;font-size:26px;font-weight:800;color:#0F172A;letter-spacing:-.02em}
+  .sumrow p{margin:6px 0 0;font-size:13.5px;color:#64748B;display:flex;align-items:center;gap:6px}
+  .totbox{background:#fff;padding:14px 22px;border-radius:14px;border:1px solid var(--line);
+          box-shadow:0 1px 3px rgba(0,0,0,.04);display:flex;align-items:center;gap:16px}
+  .totbox .lab{font-size:13px;font-weight:700;color:#64748B}
+  .totbox b{font-size:32px;font-weight:900;color:var(--navy);line-height:1;font-variant-numeric:tabular-nums}
+  .totbox .u{font-size:15px;color:#94A3B8;font-weight:600;margin-left:3px}
+
+  /* ── Glass cards ──────────────────────────────── */
+  .gcard{background:rgba(255,255,255,.96);border:1px solid rgba(226,232,240,.85);
+         border-radius:20px;padding:24px;
+         box-shadow:0 2px 4px rgba(0,0,0,.02),0 8px 16px rgba(0,0,0,.03);
+         transition:transform .2s ease,box-shadow .2s ease;margin-bottom:24px}
+  .gcard:hover{box-shadow:0 12px 28px rgba(0,0,0,.06);transform:translateY(-2px)}
+  .gcard h3{margin:0 0 18px;font-size:17px;font-weight:800;color:#1E293B;display:flex;align-items:center;gap:8px}
+  .gcard h3 .ic{font-size:19px}
+  .gcard h3 .sub{font-size:11.5px;font-weight:500;color:#94A3B8;margin-left:6px}
+  .row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:24px}
+  .row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
+  @media(min-width:1024px){
+    .row3{grid-template-columns:2fr 1fr}
+    .row3 .wide{grid-column:span 1}
+  }
+
+  /* ── Level widget ─────────────────────────────── */
+  .lvgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;position:relative}
+  .lvgrid::before{content:"";position:absolute;top:26px;left:12%;width:75%;height:2px;
+                  background:#E8EDF4;border-radius:99px;z-index:0}
+  .lv{display:flex;flex-direction:column;align-items:center;position:relative;z-index:1}
+  .lv .cir{width:52px;height:52px;border-radius:99px;background:#fff;border:4px solid #E8EDF4;
+           display:flex;align-items:center;justify-content:center;font-weight:800;font-size:16px;
+           color:#94A3B8;margin-bottom:8px;transition:all .4s ease}
+  .lv .nm{font-size:13.5px;font-weight:800;color:#475569}
+  .lv .ct{font-size:12px;color:#94A3B8;margin-top:4px;font-variant-numeric:tabular-nums}
+  .lv.on .cir{background:#FFFBEB;border-color:#FBBF24;color:#B45309;transform:scale(1.18) translateY(-4px);
+              box-shadow:0 8px 20px rgba(245,158,11,.3)}
+  .lv.on .nm{color:var(--navy);font-weight:900}
+  .lv.on .ct{background:#FFFBEB;color:#D97706;font-weight:800;padding:2px 9px;border-radius:7px}
+  .lv.zero .cir{background:#F8FAFC}
+  .lv.zero .nm{color:#94A3B8}
+  @media(max-width:560px){.lvgrid{gap:8px}.lv .cir{width:44px;height:44px;font-size:14px}
+    .lv .nm{font-size:12px}.lv .ct{font-size:10.5px}}
+
+  /* ── Bar rows (기본 시각화) ────────────────────── */
+  .row{margin:12px 0}
+  .lab{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:5px;align-items:baseline}
+  .lab .n{font-weight:800;color:var(--navy);white-space:nowrap;font-variant-numeric:tabular-nums;font-size:13px}
+  .track{height:10px;background:#F1F5F9;border-radius:99px;overflow:hidden}
+  .fill{height:100%;background:var(--navy);border-radius:99px;transition:width .6s cubic-bezier(.16,1,.3,1)}
+  .row.zero{opacity:.5}
+  .row.zero .lab .n{color:#94A3B8;font-weight:600}
+  .row.top .fill{background:linear-gradient(90deg,var(--navy),var(--blue))}
+  .row.top .lab .n{color:var(--navy)}
+
+  /* ── Chips (단일 응답 강조) ────────────────────── */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{padding:6px 12px;border-radius:9px;font-size:12.5px;font-weight:700;
+        background:#fff;border:1.5px solid var(--line);color:#94A3B8}
+  .chip.on{background:#DBEAFE;color:#1D4ED8;border-color:#BFDBFE}
+  .chip.zero{opacity:.55}
+
+  /* ── Comments ─────────────────────────────────── */
+  .cm h3{margin:0 0 14px}
+  .cm ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  .cm li{background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);
+         border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.6}
+  .empty{text-align:center;padding:56px 20px;color:#94A3B8;background:rgba(255,255,255,.6);
+         border-radius:18px;border:2px dashed #CBD5E1}
+  .empty b{display:block;font-size:17px;color:#475569;margin-bottom:6px}
+  .warn{background:#FFFBEB;border:1px solid #FDE68A;color:#92400E;padding:12px 14px;
+        border-radius:12px;font-size:13.5px;margin-bottom:20px}
+
+  footer{text-align:center;font-size:12px;color:#94A3B8;padding:20px;
+         border-top:1px solid var(--line);background:#fff}
+
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --bg:#14171C; --card:#1C2027; --line:#2C323B; --text:#E8EAEE; --grey:#9AA2AF;
-      color-scheme: dark;
+      --bg:#14171C; --card:#1C2027; --line:#2C323B; --text:#E8EAEE; color-scheme:dark;
     }
-    :root:not([data-theme="light"]) h1{color:#9DB8E8}
-    :root:not([data-theme="light"]) .total b{color:#9DB8E8}
+    :root:not([data-theme="light"]) body{background-color:#14171C;
+      background-image:radial-gradient(at 0% 0%, hsla(220,40%,12%,1) 0, transparent 50%),
+                       radial-gradient(at 100% 100%, hsla(220,35%,15%,1) 0, transparent 50%)}
+    :root:not([data-theme="light"]) nav{background:rgba(20,23,28,.9)}
+    :root:not([data-theme="light"]) .bs-t{color:#9DB8E8}
+    :root:not([data-theme="light"]) .gcard{background:rgba(28,32,39,.96);border-color:#2C323B}
+    :root:not([data-theme="light"]) .gcard h3{color:#F1F5F9}
+    :root:not([data-theme="light"]) .sumrow h2{color:#F1F5F9}
+    :root:not([data-theme="light"]) .totbox{background:#1C2027;border-color:#2C323B}
+    :root:not([data-theme="light"]) .lv .cir{background:#1C2027;border-color:#2C323B}
+    :root:not([data-theme="light"]) .lv.on .cir{background:#292524;border-color:#FBBF24}
+    :root:not([data-theme="light"]) .lv.zero .nm{color:#64748B}
     :root:not([data-theme="light"]) .track{background:#2C323B}
     :root:not([data-theme="light"]) .lab .n{color:#9DB8E8}
+    :root:not([data-theme="light"]) .row.top .fill{background:linear-gradient(90deg,#4A6DA8,#3B82F6)}
+    :root:not([data-theme="light"]) .fill{background:#4A6DA8}
+    :root:not([data-theme="light"]) .chip{background:#1C2027;border-color:#2C323B}
+    :root:not([data-theme="light"]) .chip.on{background:#1E3A5F;color:#93C5FD;border-color:#2E4A75}
+    :root:not([data-theme="light"]) .cm li{background:#1C2027;border-color:#2C323B}
+    :root:not([data-theme="light"]) .empty{background:rgba(28,32,39,.6);border-color:#2C323B}
+    :root:not([data-theme="light"]) .warn{background:#2C2410;border-color:#5C4A1A;color:#FCD34D}
+    :root:not([data-theme="light"]) footer{background:#14171C}
+    :root:not([data-theme="light"]) .qno, :root:not([data-theme="light"]) .lvgrid::before{background:#232830}
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div>
-      <div class="kicker">BYUCKSAN</div>
-      <h1>임원 AI 사용 현황 — 실시간 결과</h1>
-      <div class="live"><span class="dot"></span><span id="upd">연결 중…</span></div>
+
+<nav>
+  <div class="navin">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="bslogo" style="width:36px;height:36px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;letter-spacing:-.05em;box-shadow:0 3px 8px rgba(31,56,100,.3)">BS</div>
+      <div>
+        <h1 class="bs-t">임원 AI 사용 현황</h1>
+        <p class="bs-s">📄 설문 결과 — 실시간 집계</p>
+      </div>
     </div>
-    <div class="total"><b id="tot">0</b><span>응답</span></div>
-  </header>
+    <div class="live"><span class="dot"></span><span class="smh">LIVE 자동 갱신</span><span class="smh" style="display:none"></span><span style="display:none" id="liveShort"></span>LIVE<span class="smh"> 자동 갱신</span></div>
+  </div>
+</nav>
+
+<main>
+  <div class="sumrow fadein">
+    <div>
+      <h2 style="margin:0;font-size:26px;font-weight:800;color:#0F172A;letter-spacing:-.02em">실시간 결과 대시보드</h2>
+      <p style="margin:6px 0 0;font-size:13px;color:#64748B;display:flex;align-items:center;gap:6px">
+        🔄 구글 시트 연동 · <span id="upd">연결 중…</span></p>
+    </div>
+    <div class="totbox">
+      <span class="lab">총 응답자</span>
+      <span style="font-size:32px;font-weight:900;color:var(--navy);line-height:1"><span id="tot">0</span><span class="u">명</span></span>
+    </div>
+  </div>
+
   <div id="warn"></div>
-    <div id="levelBox"></div>
-    <div class="grid" id="grid"></div>
-    <div class="cm" id="cmbox"></div>
-</div>
+  <div id="levelBox"></div>
+  <div class="row3" id="grid"></div>
+  <div class="gcard cm" id="cmbox" style="display:none"></div>
+</main>
+
+<footer>© 2026 Byucksan Corp — 실시간 렌더링 (4초 간격)</footer>
 
 <script>
-function pct(n, base){ return base > 0 ? Math.round(n / base * 100) : 0; }
+const esc = s => String(s||'').replace(/[<>&]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));
+const pct = (n, b) => b > 0 ? Math.round(n / b * 100) : 0;
 
+/* ── Level widget (4-step ladder) ─────────────── */
 function drawLevel(level, total){
   const box = document.getElementById('levelBox');
-  if (!level || !level.counts || !total){
-    box.innerHTML = '';
-    return;
+  if (!level || !level.counts){
+    box.innerHTML = ''; return;
   }
-  // 응답된 행만 레벨 산출 (tools 등 한 문항이라도 응답된 것)
-  const scored = level.scored || total;
-  // 정렬: 달인→자연인
-  const order = ['달인','활용자','체험자','자연인'];
-  const LV = order.map(k => level.counts[k] !== undefined
-      ? { key:k, count: level.counts[k], emoji: (level.levels||[]).filter(x=>x.key===k)[0]?.emoji || '' }
-      : null).filter(Boolean);
-  const max = Math.max(...LV.map(x=>x.count), 0);
-  box.innerHTML =
-    `<div class="card" style="border:2px solid var(--navy)">
-      <h2>🏅 사용자 레벨 — 자연인 → 달인</h2>
-      <div class="meta">판정 ${scored}명 · 점수 자동 집계</div>` +
-    LV.map(x => {
-      const p = scored > 0 ? Math.round(x.count / scored * 100) : 0;
-      const top = max > 0 && x.count === max ? ' top' : '';
-      return `<div class="row${top}">
-        <div class="lab"><span>${x.emoji} ${x.key}</span>
-          <span class="n">${x.count}명 · ${p}%</span></div>
-        <div class="track"><div class="fill" style="width:${p}%"></div></div>
-      </div>`;
-    }).join('') +
-    `</div>`;
+  const scored = level.scored || 0;
+  if (!scored){ box.innerHTML = ''; return; }
+  const meta = { '자연인':1, '체험자':2, '활용자':3, '달인':4 };
+  const order = ['자연인','체험자','활용자','달인'];
+  const emoji = k => (level.levels||[]).filter(x=>x.key===k)[0]?.emoji || '';
+  const active = order.reduce((a,k)=> level.counts[k] > 0 ? k : a, null);
+  const actIdx = active ? meta[active] : 0;
+
+  box.innerHTML = `
+  <div class="gcard fadein d1" style="margin-bottom:24px">
+    <h3><span class="ic">🏅</span> 사용자 레벨 판정 <span class="sub">자동 집계</span></h3>
+    <div class="lvgrid">
+      ${order.map(k => {
+        const c = level.counts[k] || 0;
+        const p = pct(c, scored);
+        const isOn = active === k;
+        return `<div class="lv ${isOn?'on':''} ${c===0?'zero':''}">
+          <div class="cir" ${isOn?'style="font-size:20px;font-weight:900"':''}>${isOn ? '4' : meta[k]}</div>
+          <span class="nm">${emoji[k]||''} ${k}</span>
+          <span class="ct">${c}명 (${p}%)</span>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
 }
 
+/* ── Main grid: 3 special cards + generic rows ── */
 function draw(d){
   document.getElementById('tot').textContent = d.total;
   const bk = {sheet:'구글 시트', redis:'Redis', memory:'메모리'}[d.backend] || '';
-    document.getElementById('upd').textContent =
-      '자동 갱신 · ' + new Date().toLocaleTimeString('ko-KR') + (bk ? ' · ' + bk : '') +
-      (d.stale ? ' · (새로고침 중, 이전 데이터)' : '');
+  document.getElementById('upd').innerHTML =
+    '🔄 구글 시트 연동 · ' + new Date().toLocaleTimeString('ko-KR') +
+    (d.stale ? ' · <b style="color:#D97706">갱신 지연</b>' : '');
 
   document.getElementById('warn').innerHTML = d.persisted ? '' :
-    '<div class="warn">저장소가 연결되지 않아 응답이 유지되지 않습니다. ' +
-    'apps-script/README.md 를 따라 구글 시트를 연결하고 ' +
-    'SHEET_API_URL · SHEET_TOKEN 환경변수를 설정해 주세요.</div>';
+    '<div class="warn">⚠️ 저장소가 연결되지 않아 응답이 유지되지 않습니다. ' +
+    'SHEET_API_URL · SHEET_TOKEN 환경변수를 확인해 주세요.</div>';
 
+  const grid = document.getElementById('grid');
+  const cm = document.getElementById('cmbox');
   if (!d.total){
-    document.getElementById('grid').innerHTML =
-      '<div class="empty">아직 응답이 없습니다.<br>QR을 스캔해 참여해 주세요.</div>';
+    grid.innerHTML = '<div class="gcard empty" style="grid-column:1/-1;text-align:center;padding:52px 20px;color:#94A3B8"><b>아직 응답이 없습니다</b>QR을 스캔해 참여해 주세요</div>';
+    cm.style.display = 'none';
+    drawLevel(d.level, d.total);
     return;
   }
+  grid.innerHTML = '';
+  const by = {}; d.stats.forEach(s => by[s.id] = s);
 
-  const g = document.getElementById('grid');
-  g.innerHTML = '';
-  d.stats.forEach(s => {
-    const max = Math.max(...s.options.map(o => o.count), 0);
-    const card = document.createElement('div');
-    card.className = 'card';
-    const kind = s.type === 'multi' ? '복수 응답' : '단일 응답';
-    card.innerHTML = `<h2>${s.title}</h2>
-      <div class="meta">${kind} · 응답 ${s.answered}명</div>` +
-      s.options.map(o => {
-        const p = pct(o.count, s.answered);
-        const top = max > 0 && o.count === max ? ' top' : '';
-        return `<div class="row${top}">
-            <div class="lab"><span>${o.label}</span>
-              <span class="n">${o.count}명 · ${p}%</span></div>
-            <div class="track"><div class="fill" style="width:${p}%"></div></div>
-          </div>`;
-      }).join('');
-    g.appendChild(card);
-  });
-
-  const cb = document.getElementById('cmbox');
-    cb.innerHTML = d.comments && d.comments.length
-      ? `<h2>한마디 (${d.comments.length})</h2><ul>` +
-        d.comments.map(c => `<li>${c.replace(/[<>&]/g, m =>
-          ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}</li>`).join('') + '</ul>'
-      : '';
-
-    drawLevel(d.level, d.total);
+  /* 특별 카드 1: tools — horizontal-bar 스타일 (row) */
+  if (by.tools){
+    grid.insertAdjacentHTML('beforeend', cardBar(by.tools, 'd2', '💼'));
   }
+  /* 특별 카드: freq + paid 도넛 대신 트랙형으로 2단 */
+  if (by.freq || by.paid){
+    grid.insertAdjacentHTML('beforeend',
+      `<div class="gcard fadein d3" style="display:flex;flex-direction:column;gap:18px">
+        ${by.freq ? miniCard(by.freq, '⏱️') : ''}
+        ${by.paid ? `<div style="border-top:1px solid #F1F5F9;padding-top:14px">${mini(by.paid, '💳')}</div>` : ''}
+      </div>`);
+  }
+  /* use — progress bars */
+  if (by.use){
+    grid.insertAdjacentHTML('beforeend', barCard(by.use, '🎯'));
+  }
+  /* agent + trust + data + support — compact chips */
+  const compact = d.stats.filter(s => ['agent','trust','data','support'].includes(s.id));
+  if (compact.length){
+    grid.insertAdjacentHTML('beforeend', compactCard(compact));
+  }
+  /* 남은 문항 (위에서 안 그린 것) */
+  const drawn = new Set(['tools','freq','paid','use','agent','trust','data','support']);
+  d.stats.filter(s => !['tools','freq','paid','use'].includes(s.id) && !['agent','trust','data','support'].includes(s.id))
+    .forEach(s => grid.insertAdjacentHTML('beforeend', barCard(s, '📋')));
+
+  /* comments */
+  if (d.comments && d.comments.length){
+    cm.style.display = '';
+    cm.innerHTML = `<h3>💬 한마디 <span class="sub">${d.comments.length}건</span></h3><ul style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px">` +
+      d.comments.map(c => `<li>${esc(c)}</li>`).join('') + '</ul>';
+  } else cm.style.display = 'none';
+
+  drawLevel(d.level, d.total);
+}
+
+function barCard(s, icon){
+  const max = Math.max(...s.options.map(o=>o.count), 0);
+  return `<div class="gcard fadein d2">
+    <h3>${icon} ${s.title} ${s.type==='multi' ? '<span class="sub">복수 응답</span>' : ''}</h3>
+    ${s.options.map(o => {
+      const p = pct(o.count, s.answered);
+      const top = max>0 && o.count===max;
+      return `<div class="row ${top?'top':''} ${o.count===0?'zero':''}">
+        <div class="lab"><span style="${top?'font-weight:800;color:#0F172A':''}">${o.label}</span>
+          <span class="n">${o.count}명 (${p}%)</span></div>
+        <div class="track"><div class="fill" style="width:${p}%"></div></div>
+      </div>`;
+    }).join('')}</div>`;
+}
+function cardBar(s){
+  return barCard(s, '💻');
+}
+function cardBar2(s){ return barCard(s); }
+function cardBarGeneric(s){ return barCard(s); }
+function miniCard(s, icon){
+  const max = Math.max(...s.options.map(o=>o.count),0);
+  return `<div><h4 style="margin:0 0 10px;font-size:14px;font-weight:800;color:#1E293B">${icon} ${s.title}</h4>
+    ${s.options.map(o=>{
+      const p=pct(o.count,s.answered); const top=max>0&&o.count===max;
+      return `<div class="row ${o.count===0?'zero':''}${top?' top':''}">
+        <div class="lab"><span style="${top?'font-weight:800;color:#0F172A':''}">${o.label}</span>
+        <span class="n">${o.count}명 · ${p}%</span></div>
+        <div class="track"><div class="fill" style="width:${p}%"></div></div></div>`;
+    }).join('')}</div>`;
+}
+function compactCard(stats){
+  return `<div class="gcard fadein d3">
+    <h3>🧠 AI 활용 인식·태도</h3>
+    ${stats.map(s=>{
+      const max=Math.max(...s.options.map(o=>o.count),0);
+      return `<div style="margin-bottom:16px">
+        <h4 style="margin:0 0 8px;font-size:13.5px;font-weight:800;color:#334155">${s.title}</h4>
+        <div class="chips">${s.options.map(o=>{
+          const on=max>0&&o.count===max;
+          return `<span class="chip ${on?'on':''} ${o.count===0?'zero':''}"
+            style="padding:6px 12px;border-radius:9px;font-size:12.5px;font-weight:700;${on?'background:#DBEAFE;color:#1D4ED8;border:1.5px solid #BFDBFE':'background:#fff;border:1.5px solid #E2E8F0;color:#94A3B8'}">
+            ${o.label} (${o.count}명)</span>`;
+        }).join('')}</div></div>`;
+    }).join('')}</div>`;
+}
+function barCard(s, icon){
+  return barCardImpl(s, icon);
+}
+function barCardImpl(s, icon){
+  return `<div class="gcard fadein d2">
+    <h3>${icon||'📊'} ${s.title} ${s.type==='multi' ? '<span class="sub">복수 응답</span>' : ''}</h3>
+    ${s.options.map(o=>{
+      const p=pct(o.count,s.answered);
+      const max=Math.max(...s.options.map(x=>x.count),0);
+      const top=max>0&&o.count===max;
+      return `<div class="row ${top?'top':''} ${o.count===0?'zero':''}">
+        <div class="lab"><span style="${top?'font-weight:800;color:#0F172A':''}">${o.label}</span>
+          <span class="n">${o.count}명 · ${p}%</span></div>
+        <div class="track"><div class="fill" style="width:${p}%"></div></div></div>`;
+    }).join('')}</div>`;
+}
 
 async function tick(){
   try{
     const r = await fetch('/api/stats', { cache:'no-store' });
     const j = await r.json();
     if (j && j.total !== undefined){
-      draw(j);
-      lastGood = j; // 완충: 실패 시 직전 정상 데이터 유지
+      draw(j); lastGood = j;
     } else if (lastGood){
       draw({ ...lastGood, stale: true });
     }
   }catch(e){
-    if (lastGood){
-      draw({ ...lastGood, stale: true });
-    } else {
-      document.getElementById('upd').textContent = '연결 오류 — 재시도 중';
-    }
+    if (lastGood) draw({ ...lastGood, stale:true });
+    else document.getElementById('upd').textContent = '연결 오류 — 재시도 중';
   }
 }
 let lastGood = null;
