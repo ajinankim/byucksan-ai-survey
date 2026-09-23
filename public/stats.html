@@ -75,24 +75,30 @@
         .gcard h3 .sub{font-size:11.5px;font-weight:500;color:#94a3b8;margin-left:auto}
         .gcard:empty{display:none}
 
-        /* level distribution — proportional circles, ordinal 1-hue ramp
-           (light=자연인→dark=달인), area ∝ count (radius ∝ √count) */
-        .lvbubbles{display:flex;align-items:flex-end;justify-content:space-around;
-                   gap:10px;padding:16px 4px 4px;flex-wrap:wrap}
-        .lvb{display:flex;flex-direction:column;align-items:center;gap:10px;flex:1 1 0;min-width:72px}
-        .lvb .circ{border-radius:50%;box-shadow:0 6px 16px rgba(31,56,100,.18);
-                   transition:width .5s cubic-bezier(.16,1,.3,1),height .5s cubic-bezier(.16,1,.3,1)}
-        .lvb.zero .circ{background:transparent!important;border:2px dashed #cbd5e1;box-shadow:none}
-        .lvb .nm{font-size:12.5px;font-weight:800;color:#334155;display:flex;
-                 align-items:center;gap:4px;white-space:nowrap}
-        .lvb .nm .emoji{font-size:14px}
-        .lvb .val{font-size:13px;font-weight:800;color:#0f172a;font-variant-numeric:tabular-nums}
-        .lvb .val .p{font-weight:600;color:#94a3b8;margin-left:2px;font-size:11.5px}
-        .lvb.zero .val,.lvb.zero .nm{opacity:.55}
-        .lvb .badge{display:inline-block;padding:1px 7px;border-radius:99px;
-                    font-size:10px;font-weight:800;background:#fffbeb;color:#b45309;
-                    border:1px solid #fde68a}
-        @media(max-width:560px){.lvb .nm{font-size:11px}.lvb .val{font-size:12px}}
+        /* level distribution — treemap, ordinal 1-hue ramp
+           (light=자연인→dark=달인), tile area ∝ count (squarified layout) */
+        .lvtreemap{position:relative;width:100%;height:220px;border-radius:12px;overflow:hidden}
+        .lvtile{position:absolute;box-sizing:border-box;border:2px solid #fff;border-radius:8px;
+                display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
+                gap:2px;padding:10px 12px;overflow:hidden;
+                transition:left .5s cubic-bezier(.16,1,.3,1),top .5s cubic-bezier(.16,1,.3,1),
+                           width .5s cubic-bezier(.16,1,.3,1),height .5s cubic-bezier(.16,1,.3,1)}
+        .lvtile.mid,.lvtile.tiny{align-items:center;justify-content:center}
+        .lvtile .nm{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:5px;white-space:nowrap}
+        .lvtile .nm .emoji{font-size:15px}
+        .lvtile .val{font-size:12.5px;font-weight:700;opacity:.85;font-variant-numeric:tabular-nums}
+        .lvtile .val .p{font-weight:600;opacity:.85;margin-left:2px}
+        .lvtile .badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;
+                       font-size:9.5px;font-weight:800;background:#fffbeb;color:#b45309;
+                       border:1px solid #fde68a;vertical-align:middle}
+        .lvtile[data-lv="1"]{color:#0b0b0b}
+        .lvtile[data-lv="2"]{color:#0b0b0b}
+        .lvtile[data-lv="3"]{color:#fff}
+        .lvtile[data-lv="4"]{color:#fff}
+        .lvzero{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+        .lvzchip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;
+                 font-size:12px;font-weight:700;color:#94a3b8;background:#f8fafc;border:1.5px dashed #cbd5e1}
+        @media(max-width:560px){.lvtreemap{height:190px}.lvtile .nm{font-size:12px}.lvtile .val{font-size:11px}}
 
         /* chart rows */
         .chart-wrap{position:relative;width:100%}
@@ -187,11 +193,13 @@
             .gcard h3{color:#f1f5f9}.sumrow h2{color:#f1f5f9;color:#f1f5f9}
             .totbox{background:#1c2027;border-color:#2c323b}
             :root{--lv1:#3B5578;--lv2:#4A6DA8;--lv3:#6E93CE;--lv4:#9DB8E8}
-            .lvb .nm{color:#cbd5e1}
-            .lvb .val{color:#e8eaee}
-            .lvb .val .p{color:#64748b}
-            .lvb.zero .circ{border-color:#3b4451}
-            .lvb .badge{background:#292524;color:#fbbf24;border-color:#5c4a1a}
+            .lvtile{border-color:#1c2027}
+            .lvtile[data-lv="1"]{color:#fff}
+            .lvtile[data-lv="2"]{color:#fff}
+            .lvtile[data-lv="3"]{color:#0b0b0b}
+            .lvtile[data-lv="4"]{color:#0b0b0b}
+            .lvtile .badge{background:#292524;color:#fbbf24;border-color:#5c4a1a}
+            .lvzchip{color:#64748b;background:#1c2027;border-color:#3b4451}
             .track{background:#2c323b}.lab .n{color:#9db8e8}
             .fill{background:#4a6da8}
             .row.top .fill{background:linear-gradient(90deg,#4a6da8,#3b82f6)}
@@ -266,31 +274,79 @@ const pct = (n, b) => b > 0 ? Math.round(n / b * 100) : 0;
 const NAVY='#1F3864', SL='#f1f5f9', BLUE='#3b82f6', EMERALD='#10b981', AMBER='#f59e0b';
 let charts = {};
 
-/* ── 레벨 분포 (비례 원 — 자연인 옅음/작음 → 달인 진함/큼, 면적 ∝ 인원) ── */
+/* ── 순서형 값(≥0)에 대한 squarified treemap 레이아웃 ── */
+function squarify(items, x, y, w, h, out){
+    if (!items.length) return;
+    if (items.length === 1){ out.push({...items[0], x, y, w, h}); return; }
+    const total = items.reduce((s,d)=>s+d.value,0);
+    const scale = (w*h)/total;
+    const scaled = items.map(d=>({...d, area:d.value*scale}));
+    const shortSide = Math.min(w,h);
+    const worst = row => {
+        const sum = row.reduce((s,r)=>s+r.area,0);
+        const rmax = Math.max(...row.map(r=>r.area)), rmin = Math.min(...row.map(r=>r.area));
+        return Math.max((shortSide*shortSide*rmax)/(sum*sum), (sum*sum)/(shortSide*shortSide*rmin));
+    };
+    let row = [scaled[0]], i = 1;
+    while (i < scaled.length){
+        const testRow = row.concat([scaled[i]]);
+        if (worst(testRow) <= worst(row)){ row = testRow; i++; } else break;
+    }
+    const rowSum = row.reduce((s,r)=>s+r.area,0);
+    let nx=x, ny=y, nw=w, nh=h, offset=0;
+    if (w >= h){
+        const rowW = rowSum / h;
+        row.forEach(r=>{ const rh = h*(r.area/rowSum); out.push({...r, x, y:y+offset, w:rowW, h:rh}); offset += rh; });
+        nx = x+rowW; nw = w-rowW;
+    } else {
+        const rowH = rowSum / w;
+        row.forEach(r=>{ const rw = w*(r.area/rowSum); out.push({...r, x:x+offset, y, w:rw, h:rowH}); offset += rw; });
+        ny = y+rowH; nh = h-rowH;
+    }
+    squarify(scaled.slice(row.length), nx, ny, nw, nh, out);
+}
+
+/* ── 레벨 분포 (treemap — 타일 면적 ∝ 인원, 자연인 옅음 → 달인 진함) ── */
 function drawLevel(level){
     const box = document.getElementById('levelBox');
     if (!level || !level.counts || !(level.scored||0)){ box.innerHTML=''; return; }
     const scored = level.scored;
     const order = ['자연인','체험자','활용자','달인'];
     const ramp = {'자연인':'var(--lv1)','체험자':'var(--lv2)','활용자':'var(--lv3)','달인':'var(--lv4)'};
+    const slot = {'자연인':1,'체험자':2,'활용자':3,'달인':4};
     const emoji = k => (level.levels||[]).filter(x=>x.key===k)[0]?.emoji || '';
-    const counts = order.map(k=>level.counts[k]||0);
-    const maxCount = Math.max(...counts, 1);
-    const MAXD = 128, MIND = 34; // 지름(px) — 면적이 인원수에 비례하도록 반지름은 √비율로 스케일
+    const present = order.filter(k => (level.counts[k]||0) > 0);
+    const zero = order.filter(k => !(level.counts[k]||0));
+    const maxCount = Math.max(...present.map(k=>level.counts[k]));
+
     box.innerHTML = `<div class="gcard fadein d1">
             <h3>🏅 사용자 레벨 분포<span class="sub">자동 집계 · ${scored}명</span><button class="levelbtn" onclick="openLevelModal()">📏 기준 보기</button></h3>
-            <div class="lvbubbles">
-              ${order.map(k=>{
-                const c=level.counts[k]||0, p=Math.round(c/scored*100), isTop=c>0 && c===maxCount;
-                const d = c>0 ? Math.max(MIND, Math.round(Math.sqrt(c/maxCount)*MAXD)) : MIND;
-                return `<div class="lvb ${c===0?'zero':''}">
-                  <div class="circ" style="width:${d}px;height:${d}px;background:${ramp[k]}"></div>
-                  <div class="nm"><span class="emoji">${emoji(k)}</span>${k}${isTop?'<span class="badge">최다</span>':''}</div>
-                  <div class="val">${c}명<span class="p">(${p}%)</span></div>
-                </div>`;
-              }).join('')}
-            </div>
+            <div class="lvtreemap" id="lvTreemap"></div>
+            ${zero.length ? `<div class="lvzero">${zero.map(k=>
+              `<span class="lvzchip"><span class="emoji">${emoji(k)}</span>${k} 0명 (0%)</span>`).join('')}</div>` : ''}
           </div>`;
+
+    const tm = document.getElementById('lvTreemap');
+    const w = tm.clientWidth, h = tm.clientHeight;
+    const items = present.map(k => ({ key:k, value: level.counts[k] }))
+                          .sort((a,b) => b.value - a.value);
+    const rects = [];
+    squarify(items, 0, 0, w, h, rects);
+
+    tm.innerHTML = rects.map(r => {
+        const p = Math.round(r.value/scored*100), isTop = r.value === maxCount;
+        const size = r.w >= 90 && r.h >= 64 ? 'big' : (r.w >= 46 && r.h >= 40 ? 'mid' : 'tiny');
+        const label = size === 'big'
+          ? `<span class="nm"><span class="emoji">${emoji(r.key)}</span>${r.key}${isTop?'<span class="badge">최다</span>':''}</span>
+             <span class="val">${r.value}명<span class="p">(${p}%)</span></span>`
+          : size === 'mid'
+          ? `<span class="nm"><span class="emoji">${emoji(r.key)}</span>${r.value}명</span>`
+          : `<span class="emoji">${emoji(r.key)}</span>`;
+        return `<div class="lvtile ${size}" data-lv="${slot[r.key]}"
+                     style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;background:${ramp[r.key]}">
+                  ${label}
+                </div>`;
+    }).join('');
     }
 
     /* ── 레벨 기준 팝업 ── */
