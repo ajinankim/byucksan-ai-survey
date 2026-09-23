@@ -1,5 +1,6 @@
 import { push, hasStore } from "./_store.js";
 import { QUESTIONS } from "./_questions.js";
+import { calculateScore, LEVELS } from "./_level.js";
 
 const IDS = new Set(QUESTIONS.map((q) => q.id));
 
@@ -35,7 +36,14 @@ export default async function handler(req, res) {
     if (comment) record.comment = comment;
 
     const n = await push(record);
-    res.status(200).json({ ok: true, count: n, persisted: hasStore });
+    const { score, levelKey } = calculateScore(answers);
+    const levelMeta = LEVELS.find((L) => L.key === levelKey);
+    res.status(200).json({
+      ok: true,
+      count: n,
+      persisted: hasStore,
+      level: { key: levelKey, score, emoji: levelMeta?.emoji, desc: levelMeta?.desc },
+    });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e) });
   }

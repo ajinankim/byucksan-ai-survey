@@ -140,6 +140,23 @@
   .done a:hover{background:#F8FAFC}
   @keyframes ringPulse{0%{transform:scale(1);opacity:.65}100%{transform:scale(1.5);opacity:0}}
 
+  /* ── Personal level result ─────────────────────── */
+  .lvres{margin:22px auto 0;max-width:340px;border-radius:18px;padding:22px 20px;
+         background:#fff;border:1.5px solid var(--line);box-shadow:0 8px 22px rgba(0,0,0,.06);text-align:center}
+  .lvres .emo{font-size:44px;line-height:1;margin-bottom:6px}
+  .lvres .nm{font-size:21px;font-weight:900;color:var(--navy-deep);letter-spacing:-.01em}
+  .lvres .sc{display:inline-block;margin-top:6px;padding:3px 10px;border-radius:99px;
+             font-size:12px;font-weight:800;background:#F0F4FB;color:var(--navy)}
+  .lvres .ds{margin:12px 0 0;font-size:13px;line-height:1.6;color:#64748B}
+  .lvladder{display:flex;justify-content:center;gap:10px;margin-top:18px}
+  .lvladder .st{display:flex;flex-direction:column;align-items:center;gap:5px;opacity:.4;transition:opacity .2s}
+  .lvladder .st.on{opacity:1}
+  .lvladder .st .ic{width:30px;height:30px;border-radius:99px;background:#F1F5F9;
+                     display:flex;align-items:center;justify-content:center;font-size:14px}
+  .lvladder .st.on .ic{background:#FFFBEB;box-shadow:0 4px 10px rgba(245,158,11,.3)}
+  .lvladder .st .lb{font-size:10px;font-weight:700;color:#94A3B8}
+  .lvladder .st.on .lb{color:var(--navy);font-weight:800}
+
   .err{background:#FEE2E2;border:1px solid #FCA5A5;color:#991B1B;padding:12px 14px;
        border-radius:12px;font-size:13.5px;margin:14px 0;line-height:1.55}
 
@@ -180,6 +197,13 @@
     :root:not([data-theme="light"]) .rstPin{background:#14171C;border-color:#2C323B;color:#E8EAEE}
     :root:not([data-theme="light"]) .rstConf .no2{background:#1C2027;border-color:#3B4451;color:#CBD5E1}
     :root:not([data-theme="light"]) .qno{box-shadow:0 4px 10px rgba(0,0,0,.4)}
+    :root:not([data-theme="light"]) .lvres{background:#1C2027;border-color:#2C323B}
+    :root:not([data-theme="light"]) .lvres .sc{background:#1E2940;color:#9DB8E8}
+    :root:not([data-theme="light"]) .lvres .ds{color:#AEB6C2}
+    :root:not([data-theme="light"]) .lvladder .st .ic{background:#1C2027}
+    :root:not([data-theme="light"]) .lvladder .st.on .ic{background:#292524}
+    :root:not([data-theme="light"]) .lvladder .st .lb{color:#64748B}
+    :root:not([data-theme="light"]) .lvladder .st.on .lb{color:#9DB8E8}
   }
 </style>
 </head>
@@ -349,6 +373,21 @@ document.getElementById('send').addEventListener('click', async () => {
       if (j === null) throw new Error('서버 응답 오류 (잠시 후 다시 시도)');
       if (!r.ok) throw new Error(j.error || '제출 실패');
       try{ localStorage.setItem('ai_survey_done', '1'); }catch(e){}
+      const lv = j.level;
+      const lvOrder = ['자연인','체험자','활용자','달인'];
+      const lvHtml = lv && lv.key ? `
+        <div class="lvres">
+          <div class="emo">${lv.emoji || '🏅'}</div>
+          <div class="nm">${lv.key}</div>
+          <span class="sc">총점 ${lv.score}점</span>
+          <p class="ds">${lv.desc || ''}</p>
+          <div class="lvladder">
+            ${lvOrder.map(k => `<div class="st ${k === lv.key ? 'on' : ''}">
+              <span class="ic">${k === lv.key ? (lv.emoji || '✓') : ''}</span>
+              <span class="lb">${k}</span>
+            </div>`).join('')}
+          </div>
+        </div>` : '';
       document.getElementById('app').innerHTML =
         `<div class="done">
         <div style="position:relative;width:80px;height:80px;margin:0 auto 22px">
@@ -358,6 +397,7 @@ document.getElementById('send').addEventListener('click', async () => {
         <h2 style="margin:0 0 10px;font-size:24px;color:var(--navy-deep)">설문 제출 완료</h2>
         <p style="margin:0;color:#64748B;font-size:15px;line-height:1.65">
           임원님의 귀중한 의견에 감사드립니다.<br>집계된 결과는 회의 중 대시보드로 공유됩니다.</p>
+        ${lvHtml}
         <a href="/stats.html">📊 실시간 결과 대시보드 보기</a></div>`;
       document.getElementById('foot').style.display = 'none';
       return;
