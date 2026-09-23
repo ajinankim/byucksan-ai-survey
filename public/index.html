@@ -378,7 +378,7 @@ document.getElementById('send').addEventListener('click', async () => {
       const lvHtml = lv && lv.key ? `
         <div class="lvres">
           <div class="emo">${lv.emoji || '🏅'}</div>
-          <div class="nm">${lv.key}</div>
+          <div class="nm">당신은 AI "${lv.key}" 입니다</div>
           <span class="sc">총점 ${lv.score}점</span>
           <p class="ds">${lv.desc || ''}</p>
           <div class="lvladder">
@@ -398,7 +398,7 @@ document.getElementById('send').addEventListener('click', async () => {
         <p style="margin:0;color:#64748B;font-size:15px;line-height:1.65">
           임원님의 귀중한 의견에 감사드립니다.<br>집계된 결과는 회의 중 대시보드로 공유됩니다.</p>
         ${lvHtml}
-        <a href="/stats.html">📊 실시간 결과 대시보드 보기</a></div>`;
+        <a href="/stats.html">📊 전체 결과 보기</a></div>`;
       document.getElementById('foot').style.display = 'none';
       return;
     }catch(e){}
