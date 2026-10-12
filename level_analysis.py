@@ -27,10 +27,8 @@ def calculate_score(answers):
     if freq == "거의 안 씀":
         return ("자연인", s)
 
-    # 2. 유료 구독 (단일 선택; 이전 응답은 배열일 수 있어 둘 다 처리)
+    # 2. 유료 구독 (복수 배열)
     paid = answers.get("paid") or []
-    if isinstance(paid, str):
-        paid = [paid]
     if any("유료 사용" in p for p in paid):
         s += 3
     elif "무료만 사용" in paid:

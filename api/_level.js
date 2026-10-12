@@ -32,8 +32,8 @@ export function calculateScore(answers) {
   // 빈도 '거의 안 씀' → 즉시 자연인 (fast fail)
   if (freq === "거의 안 씀") return { score: 0, levelKey: "자연인" };
 
-  // 2. 유료 구독 (단일 선택; 이전 응답은 배열일 수 있어 둘 다 처리)
-  const paid = [].concat(answers.paid || []);
+  // 2. 유료 구독 (복수 선택 배열)
+  const paid = answers.paid || [];
   if (paid.some((p) => p.includes("유료 사용"))) score += 3;
   else if (paid.includes("무료만 사용")) score += 1;
 

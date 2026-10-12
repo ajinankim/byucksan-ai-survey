@@ -16,8 +16,9 @@ export const QUESTIONS = [
   },
   {
     id: "paid",
-    type: "single",
+    type: "multi",
     title: "유료 구독 여부",
+    hint: "복수 선택",
     options: [
       "회사 비용으로 유료 사용",
       "개인 비용으로 유료 사용",
