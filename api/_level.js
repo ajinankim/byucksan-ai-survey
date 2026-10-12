@@ -5,7 +5,7 @@
 //   1) 빈도 점수   : 하루에여러번5 / 하루1회3 / 주2~3회2 / 주1회미만1
 //      - '거의 안 씀' → 즉시 자연인 (fast fail)
 //   2) 유료 구독    : '유료 사용' 포�함 +3 / '무료만 사용' +1
-//   3) 활용 용도    : 3개 이상 +2 / 1개 이상 +1
+//   3) 활용 용도    : 4개 +3 / 3개 +2 / 1~2개 +1
 //   4) 데이터 입력  : '있다' +2 / '민감하지 않은 자료만' +1
 //   최종: score>=10 달인 / >=6 활용자 / >=3 체험자 / else 자연인
 
@@ -39,7 +39,8 @@ export function calculateScore(answers) {
 
   // 3. 활용 용도 다양성 (복수 선택 배열)
   const use = answers.use || [];
-  if (use.length >= 3) score += 2;
+  if (use.length >= 4) score += 3;
+  else if (use.length >= 3) score += 2;
   else if (use.length > 0) score += 1;
 
   // 4. 데이터 입력 적극성

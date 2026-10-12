@@ -36,8 +36,8 @@ export const QUESTIONS = [
     id: "use",
     type: "multi",
     title: "주로 쓰는 용도",
-    hint: "최대 3개",
-    max: 3,
+    hint: "최대 4개",
+    max: 4,
     options: [
       "문서 작성·초안",
       "긴 자료 요약",
