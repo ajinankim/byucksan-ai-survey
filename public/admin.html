@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>설문 관리</title>
+<style>
+:root{color-scheme:light dark}
+body{font-family:system-ui,sans-serif;max-width:380px;margin:10vh auto;padding:0 16px}
+input,button{width:100%;padding:12px;margin-top:10px;font-size:16px;box-sizing:border-box;border-radius:8px}
+input{border:1px solid #999;background:transparent;color:inherit}
+button{border:0;color:#fff;font-weight:700}
+#go{background:#1f6f43}#stop{background:#b3261e}
+.box{border:1px solid #8884;border-radius:10px;padding:12px;margin:14px 0}
+#m{margin-top:12px;min-height:1.4em}
+</style></head>
+<body><h2>설문 관리</h2>
+<div class="box" id="status">상태 확인 중…</div>
+<input id="pin" type="password" inputmode="numeric" placeholder="관리자 암호" autocomplete="off">
+<button id="go">새 설문 시작</button>
+<button id="stop">설문 종료</button>
+<div id="m"></div>
+<p><a href="/stats.html">결과 화면</a> · <a href="/qr.html">QR 화면</a></p>
+<script>
+const $ = id => document.getElementById(id);
+async function refresh(){
+  try{
+    const j = await (await fetch('/api/session?t=' + Date.now(), { cache:'no-store' })).json();
+    const a = (j.sessions || []).find(s => s.id === j.active);
+    $('status').innerHTML = a ? `<b>● 진행 중</b> — ${a.label} (ID ${a.id})`
+      : '<b>■ 진행 중인 설문 없음</b> — 응답을 받지 않습니다';
+  }catch(e){ $('status').textContent = '상태를 불러오지 못했습니다'; }
+}
+async function act(action, ask){
+  if (!confirm(ask)) return;
+  try{
+    const r = await fetch('/api/admin', { method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ pin: $('pin').value, action }) });
+    const j = await r.json();
+    $('m').textContent = !r.ok ? (j.error || '실패')
+      : action === 'start' ? `시작했습니다 (ID ${j.session.id})` : (j.ended ? `종료했습니다 (ID ${j.ended})` : '진행 중인 설문이 없었습니다');
+    refresh();
+  }catch(e){ $('m').textContent = '연결 오류'; }
+}
+$('go').onclick = () => act('start', '새 설문을 시작할까요? 진행 중인 설문이 있으면 먼저 종료됩니다.');
+$('stop').onclick = () => act('end', '설문을 종료할까요? 종료하면 더 이상 응답이 쌓이지 않습니다.');
+refresh();
+</script></body></html>

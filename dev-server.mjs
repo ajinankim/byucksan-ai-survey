@@ -23,6 +23,8 @@ const routes = {
   "/api/config": (await import("./api/config.js")).default,
   "/api/submit": (await import("./api/submit.js")).default,
   "/api/stats": (await import("./api/stats.js")).default,
+  "/api/session": (await import("./api/session.js")).default,
+  "/api/admin": (await import("./api/admin.js")).default,
 };
 
 function shim(res) {
@@ -58,7 +60,7 @@ http
     if (fn) {
       const body = req.method === "POST" ? await readBody(req) : {};
       try {
-        await fn({ method: req.method, body, query: Object.fromEntries(url.searchParams) },
+        await fn({ method: req.method, headers: req.headers, body, query: Object.fromEntries(url.searchParams) },
                  shim(res));
       } catch (e) {
         res.writeHead(500, { "Content-Type": "application/json" });

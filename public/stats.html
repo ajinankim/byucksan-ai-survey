@@ -1,569 +1,337 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BYUCKSAN AI 사용 현황 - 실시간 결과</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
-    <style>
-        :root{
-            --navy:#1F3864; --navy-deep:#002060; --navy-light:#3b5b8c;
-            --blue:#3b82f6; --indigo:#2563eb; --emerald:#10b981; --amber:#f59e0b;
-            --line:#e2e8f0; --bg:#f1f5f9;
-            /* 레벨 분포 순서형(ordinal) 램프 — 자연인(밝음) → 달인(진함), 단일 색조 */
-            --lv1:#93AEDA; --lv2:#6389C4; --lv3:#3E619B; --lv4:#1F3864;
-        }
-        *{box-sizing:border-box}
-        html,body{margin:0;padding:0}
-        body{
-            font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Malgun Gothic','맑은 고딕',sans-serif;
-            background-color:#f1f5f9;
-            background-image:radial-gradient(at 0% 0%, hsla(217,100%,95%,1) 0, transparent 50%),
-                             radial-gradient(at 100% 100%, hsla(210,100%,97%,1) 0, transparent 50%);
-            background-attachment:fixed;
-            color:#1e293b; -webkit-font-smoothing:antialiased;
-            min-height:100vh; display:flex; flex-direction:column;
-        }
-        ::-webkit-scrollbar{width:6px;height:6px}
-        ::-webkit-scrollbar-track{background:transparent}
-        ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:10px}
-
-        /* header */
-        nav{position:sticky;top:0;z-index:50;background:rgba(255,255,255,.92);
-            backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-            border-bottom:1px solid var(--line);box-shadow:0 1px 3px rgba(0,0,0,.04)}
-        .navin{max-width:1120px;margin:0 auto;padding:0 20px;height:64px;
-               display:flex;justify-content:space-between;align-items:center}
-        .brand{display:flex;align-items:center;gap:12px}
-        .bslogo{width:36px;height:36px;border-radius:10px;background:var(--navy);color:#fff;
-                display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900;
-                letter-spacing:-.05em;box-shadow:0 3px 8px rgba(31,56,100,.3)}
-        .bs-t{margin:0;font-size:16.5px;font-weight:800;color:var(--navy-deep);letter-spacing:-.01em;line-height:1.2}
-        .bs-s{margin:2px 0 0;font-size:11px;color:#64748b;font-weight:600;display:flex;align-items:center;gap:4px}
-        .live{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;
-                      background:#fff;color:#1f3864;font-size:13px;font-weight:800;border:1.5px solid #cbd5e1;text-decoration:none}
-                .live:hover{background:#eef2f7}
-                .tip{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:99px;
-                     background:#1f3864;color:#fff;font-size:13px;font-weight:800;border:1.5px solid #1f3864;text-decoration:none}
-                .tip:hover{background:#002060}
-                .navbtns{display:flex;align-items:center;gap:8px}
-                .smh{display:inline}
-                @media(max-width:500px){.smh{display:none}}
-
-        main{flex:1;max-width:1120px;width:100%;margin:0 auto;padding:28px 20px 48px}
-        .fadein{animation:fadeIn .6s cubic-bezier(.16,1,.3,1) forwards;opacity:0}
-        @keyframes fadeIn{from{opacity:0;transform:translateY(15px)}to{opacity:1;transform:translateY(0)}}
-        .d1{animation-delay:.08s}.d2{animation-delay:.16s}.d3{animation-delay:.24s}
-
-        .sumrow{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;
-                gap:16px;margin-bottom:24px}
-        .sumrow h2{margin:0;font-size:25px;font-weight:800;color:#0f172a;letter-spacing:-.02em}
-        .sumrow p{margin:6px 0 0;font-size:13.5px;color:#64748b;display:flex;align-items:center;gap:6px}
-        .totbox{background:#fff;padding:14px 22px;border-radius:14px;border:1px solid var(--line);
-                box-shadow:0 1px 3px rgba(0,0,0,.04);display:flex;align-items:center;gap:16px}
-        .totbox .lab{font-size:13px;font-weight:700;color:#64748b}
-        .totbox b{font-size:30px;font-weight:900;color:var(--navy);line-height:1;font-variant-numeric:tabular-nums}
-        .totbox .u{font-size:15px;color:#94a3b8;font-weight:600;margin-left:3px}
-
-        .gcard{background:rgba(255,255,255,.96);border:1px solid rgba(226,232,240,.85);
-               border-radius:20px;padding:24px;margin-bottom:24px;
-               box-shadow:0 2px 4px rgba(0,0,0,.02),0 8px 16px rgba(0,0,0,.03);
-               transition:transform .2s ease,box-shadow .2s ease}
-        .gcard:hover{box-shadow:0 12px 28px rgba(0,0,0,.06);transform:translateY(-2px)}
-        .gcard h3{margin:0 0 16px;font-size:17px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:8px}
-        .gcard h3 .sub{font-size:11.5px;font-weight:500;color:#94a3b8;margin-left:auto}
-        .gcard:empty{display:none}
-
-        /* level distribution — treemap, ordinal 1-hue ramp
-           (light=자연인→dark=달인), tile area ∝ count (squarified layout) */
-        .lvtreemap{position:relative;width:100%;height:220px;border-radius:12px;overflow:hidden}
-        .lvtile{position:absolute;box-sizing:border-box;border:2px solid #fff;border-radius:8px;
-                display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;
-                gap:2px;padding:10px 12px;overflow:hidden;
-                transition:left .5s cubic-bezier(.16,1,.3,1),top .5s cubic-bezier(.16,1,.3,1),
-                           width .5s cubic-bezier(.16,1,.3,1),height .5s cubic-bezier(.16,1,.3,1)}
-        .lvtile.mid,.lvtile.tiny{align-items:center;justify-content:center}
-        .lvtile .nm{font-size:13.5px;font-weight:800;display:flex;align-items:center;gap:5px;white-space:nowrap}
-        .lvtile .nm .emoji{font-size:15px}
-        .lvtile .val{font-size:12.5px;font-weight:700;opacity:.85;font-variant-numeric:tabular-nums}
-        .lvtile .val .p{font-weight:600;opacity:.85;margin-left:2px}
-        .lvtile .badge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;
-                       font-size:9.5px;font-weight:800;background:#fffbeb;color:#b45309;
-                       border:1px solid #fde68a;vertical-align:middle}
-        .lvtile[data-lv="1"]{color:#0b0b0b}
-        .lvtile[data-lv="2"]{color:#0b0b0b}
-        .lvtile[data-lv="3"]{color:#fff}
-        .lvtile[data-lv="4"]{color:#fff}
-        .lvzero{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
-        .lvzchip{display:inline-flex;align-items:center;gap:5px;padding:5px 11px;border-radius:99px;
-                 font-size:12px;font-weight:700;color:#94a3b8;background:#f8fafc;border:1.5px dashed #cbd5e1}
-        @media(max-width:560px){.lvtreemap{height:190px}.lvtile .nm{font-size:12px}.lvtile .val{font-size:11px}}
-
-        /* chart rows */
-        .chart-wrap{position:relative;width:100%}
-        .h60{height:60px}.h120{height:120px}.h260{height:260px}
-
-        /* progress rows (use etc) */
-        /* Row2: 서비스(2fr) + 빈도/구독(1fr) — 첨부 lg:grid-cols-3 대응 */
-        .row2{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px}
-        @media(min-width:1024px){.row2{grid-template-columns:2fr 1fr}}
-        .row{margin:12px 0}
-        .lab{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;margin-bottom:5px;align-items:baseline}
-        .lab .n{font-weight:800;color:var(--navy);white-space:nowrap;font-variant-numeric:tabular-nums;font-size:13px}
-        .track{height:10px;background:#f1f5f9;border-radius:99px;overflow:hidden}
-        .fill{height:100%;background:var(--navy);border-radius:99px;transition:width .6s cubic-bezier(.16,1,.3,1)}
-        .row.zero{opacity:.5}
-        .row.zero .lab .n{color:#94a3b8;font-weight:600}
-        .row.top .fill{background:linear-gradient(90deg,var(--navy),var(--blue))}
-
-        /* chips */
-        .chips{display:flex;flex-wrap:wrap;gap:8px}
-        .chip{padding:6px 12px;border-radius:9px;font-size:12.5px;font-weight:700;
-              background:#fff;border:1.5px solid var(--line);color:#94a3b8}
-        .chip.on{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe}
-        .chip.zero{opacity:.55}
-        .mini-q{margin-bottom:16px}
-        .mini-q h4{margin:0 0 8px;font-size:13.5px;font-weight:800;color:#334155;line-height:1.35}
-
-        .cm ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-        .cm li{background:#fff;border:1px solid var(--line);border-left:4px solid var(--navy);
-               border-radius:12px;padding:12px 16px;font-size:14px;line-height:1.6}
-        .empty{text-align:center;padding:50px 20px;color:#94a3b8;background:rgba(255,255,255,.6);
-                       border-radius:18px;border:2px dashed #cbd5e1;margin-bottom:24px}
-                .empty b{display:block;font-size:17px;color:#475569;margin-bottom:6px}
-                .warn{background:#fffbeb;border:1px solid #fde68a;color:#92400e;padding:12px 14px;
-                      border-radius:12px;font-size:13.5px;margin-bottom:20px}
-
-                /* ── 레벨 기준 팝업 ── */
-                .levelbtn{margin-left:8px;padding:5px 12px;border:1.5px solid var(--line);background:#fff;
-                          color:var(--navy);border-radius:99px;font-size:12px;font-weight:800;cursor:pointer;
-                          transition:all .2s;flex:0 0 auto}
-                .levelbtn:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
-                .modal{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
-                       background:rgba(15,23,42,.55);backdrop-filter:blur(3px);padding:20px}
-                .modal.show{display:flex}
-                .modal-panel{background:#fff;border-radius:18px;max-width:430px;width:100%;max-height:82vh;
-                             overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);animation:modalIn .25s ease-out}
-                @keyframes modalIn{from{opacity:0;transform:scale(.94) translateY(8px)}to{opacity:1;transform:scale(1)}}
-                .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 20px;
-                            border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:2}
-                .modal-head h3{margin:0;font-size:16px;font-weight:800;color:var(--navy-deep)}
-                .modal-close{cursor:pointer;border:none;background:#f1f5f9;width:30px;height:30px;border-radius:99px;
-                             font-size:15px;color:#64748b;line-height:30px;text-align:center;transition:background .2s}
-                .modal-close:hover{background:#e2e8f0}
-                .modal-body{padding:18px 20px 22px}
-                .crit{margin-bottom:14px;padding:13px 15px;border-radius:12px;background:#f8fafc;border:1px solid #eef2f7}
-                .crit h4{margin:0 0 8px;font-size:13.5px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:6px}
-                .crit p{margin:0;font-size:12.5px;line-height:1.6;color:#475569}
-                .crit p score{display:inline-flex;font-weight:800;color:var(--navy);background:#e8eef8;border-radius:6px;
-                              padding:1px 7px;margin:0 2px}
-                .crit.fastfail{border-color:#fecaca;background:#fef2f2}
-                .crit.fastfail h4{color:#b91c1c}
-                .threshold{display:flex;flex-direction:column;gap:6px;margin-top:6px}
-                .threshold div{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#475569}
-                .threshold .badge{flex:0 0 auto;min-width:44px;text-align:center;padding:3px 8px;border-radius:8px;
-                                  font-weight:800;font-size:12px}
-                .t1{background:#fef3c7;color:#92400e}.t2{background:#dbeafe;color:#1d4ed8}
-                .t3{background:#dcfce7;color:#15803d}.t4{background:#f3e8ff;color:#7e22ce}
-                @media(prefers-color-scheme:dark){
-                    .levelbtn{background:#1c2027;border-color:#2c323b;color:#9db8e8}
-                    .levelbtn:hover{background:#4a6da8;color:#fff}
-                    .modal-panel{background:#1c2027}
-                    .modal-head{background:#1c2027;border-color:#2c323b}
-                    .modal-head h3{color:#9db8e8}
-                    .modal-close{background:#2c323b;color:#cbd5e1}
-                    .crit{background:#232830;border-color:#2c323b}
-                    .crit h4{color:#f1f5f9}
-                    .crit p{color:#cbd5e1}
-                    .crit p score{background:#2e4a75;color:#93c5fd}
-                    .crit.fastfail{background:#2c1414;border-color:#5c1a1a}
-                    .crit.fastfail h4{color:#fca5a5}
-                }
-
-        footer{text-align:center;font-size:12px;color:#94a3b8;padding:20px;
-               border-top:1px solid var(--line);background:#fff}
-        @media(prefers-color-scheme:dark){
-            body{background-color:#14171c;color:#e8eaee;
-                 background-image:radial-gradient(at 0% 0%, hsla(220,40%,12%,1) 0, transparent 50%),
-                                  radial-gradient(at 100% 100%, hsla(220,35%,15%,1) 0, transparent 50%)}
-            nav{background:rgba(20,23,28,.9);border-color:#2c323b}
-            .bs-t{color:#9db8e8}.bs-s{color:#94a3b8}
-            .gcard{background:rgba(28,32,39,.96);border-color:#2c323b}
-            .gcard h3{color:#f1f5f9}.sumrow h2{color:#f1f5f9;color:#f1f5f9}
-            .totbox{background:#1c2027;border-color:#2c323b}
-            :root{--lv1:#3B5578;--lv2:#4A6DA8;--lv3:#6E93CE;--lv4:#9DB8E8}
-            .lvtile{border-color:#1c2027}
-            .lvtile[data-lv="1"]{color:#fff}
-            .lvtile[data-lv="2"]{color:#fff}
-            .lvtile[data-lv="3"]{color:#0b0b0b}
-            .lvtile[data-lv="4"]{color:#0b0b0b}
-            .lvtile .badge{background:#292524;color:#fbbf24;border-color:#5c4a1a}
-            .lvzchip{color:#64748b;background:#1c2027;border-color:#3b4451}
-            .track{background:#2c323b}.lab .n{color:#9db8e8}
-            .fill{background:#4a6da8}
-            .row.top .fill{background:linear-gradient(90deg,#4a6da8,#3b82f6)}
-            .chip{background:#1c2027;border-color:#2c323b}
-            .chip.on{background:#1e3a5f;color:#93c5fd;border-color:#2e4a75}
-            .cm li{background:#1c2027;border-color:#2c323b}
-            .mini-q h4{color:#cbd5e1}
-            .empty{background:rgba(28,32,39,.6);border-color:#2c323b}
-            .warn{background:#2c2410;border-color:#5c4a1a;color:#fcd34d}
-            footer{background:#14171c}
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AI 활용 교육 사전 설문 — 실시간</title>
+<style>
+  :root{
+    --navy:#1F3864; --navy2:#002060; --grey:#6B7280; --accent:#C00000;
+    --line:#E3E6EC; --bg:#F5F6F8; --card:#FFFFFF; --text:#1B1F27; --track:#E8EBF0;
+    --l1:#9DB8E8; --l2:#5B84CC; --l3:#2F5AA8; --l4:#14306B;
+    --s1:#2F5AA8; --s2:#2A9D8F; --s3:#E9A23B; --s4:#C0504D; --s5:#8A93A3;
+    color-scheme: light;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:"Malgun Gothic","맑은 고딕",-apple-system,BlinkMacSystemFont,sans-serif;
+       background:var(--bg);color:var(--text);font-size:15px;line-height:1.45;
+       padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+  .wrap{max-width:1200px;margin:0 auto;padding:0 16px 48px}
+  header{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between;
+         padding:22px 0 14px;border-bottom:2px solid var(--navy)}
+  .kicker{font-size:11px;letter-spacing:.14em;color:var(--grey);font-weight:700}
+  h1{margin:6px 0 0;font-size:22px;font-weight:800;color:var(--navy2)}
+  .total{text-align:right}
+  .total b{display:block;font-size:40px;font-weight:800;color:var(--navy);line-height:1}
+  .total span{font-size:11.5px;color:var(--grey);font-weight:700;letter-spacing:.06em}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--grey);margin-top:6px}
+  .dot{width:7px;height:7px;border-radius:50%;background:#2FB344;animation:b 1.6s infinite}
+  @keyframes b{0%,100%{opacity:1}50%{opacity:.25}}
+  .sess{margin-top:8px;font-size:13px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .sess select{font:inherit;padding:4px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:inherit}
+  #st{font-weight:700}
+  h2.sec{font-size:13px;letter-spacing:.08em;color:var(--grey);margin:26px 0 10px;font-weight:800}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{margin:0 0 2px;font-size:15px;font-weight:700;line-height:1.35}
+  .card .meta{font-size:11.5px;color:var(--grey);margin-bottom:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+  .wide{grid-column:1/-1}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+  .tile b{display:block;font-size:30px;font-weight:800;color:var(--navy);line-height:1.1}
+  .tile span{font-size:12px;color:var(--grey)}
+  .tile i{display:block;margin-top:8px;height:5px;border-radius:9px;background:var(--track);overflow:hidden}
+  .tile u{display:block;height:100%;background:var(--navy);border-radius:9px;transition:width .5s}
+  /* Level 분포 */
+  .levels{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  @media(max-width:700px){.levels{grid-template-columns:repeat(2,1fr)}}
+  .lv{border-radius:14px;padding:14px;color:#fff;min-height:190px;
+      display:flex;flex-direction:column;justify-content:space-between}
+  .lv .nm{font-size:12px;font-weight:800;letter-spacing:.08em;opacity:.92}
+  .lv .tt{font-size:15px;font-weight:800;line-height:1.3;margin-top:2px}
+  .lv .ds{font-size:11.5px;opacity:.9;margin-top:2px}
+  .lv .pc{font-size:44px;font-weight:800;line-height:1;margin-top:10px}
+  .lv .pc small{font-size:18px;font-weight:700}
+  .lv .nn{font-size:12.5px;opacity:.95}
+  .lv.l1{background:var(--l1);color:#14306B}
+  .lv.l2{background:var(--l2)}.lv.l3{background:var(--l3)}.lv.l4{background:var(--l4)}
+  .lv{position:relative;cursor:help;outline:none}
+  .lv .i{position:absolute;top:10px;right:12px;width:20px;height:20px;border-radius:50%;
+         border:1.5px solid currentColor;font-size:12px;font-weight:800;line-height:17px;text-align:center;opacity:.8}
+  .lv .tip{position:absolute;inset:0;border-radius:14px;padding:12px 13px;background:#0F1628;color:#F1F4FA;
+           font-size:12px;line-height:1.5;opacity:0;visibility:hidden;transition:opacity .15s;overflow:auto;z-index:2}
+  .lv:hover .tip,.lv:focus .tip{opacity:1;visibility:visible}
+  .tip b{display:block;font-size:12.5px;margin-bottom:4px;color:#fff}
+  .tip dt{color:#9DB8E8;font-weight:700;margin-top:6px}
+  .tip dd{margin:0}
+  .stack{display:flex;height:16px;border-radius:99px;overflow:hidden;margin:14px 0 6px;background:var(--track)}
+  .stack i{display:block;height:100%;transition:width .5s}
+  .note{font-size:11.5px;color:var(--grey)}
+  .alloc{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .alloc div{flex:1 1 90px;background:var(--bg);border-radius:10px;padding:8px 10px;font-size:12px}
+  .alloc b{display:block;font-size:20px;color:var(--navy)}
+  /* 막대 */
+  .row{margin:9px 0}
+  .lab{display:flex;justify-content:space-between;gap:10px;font-size:13px;margin-bottom:4px}
+  .lab .n{font-weight:700;color:var(--navy);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .track{height:11px;background:var(--track);border-radius:99px;overflow:hidden}
+  .fill{height:100%;background:var(--navy);border-radius:99px;transition:width .5s ease}
+  .row.top .fill{background:var(--accent)}.row.top .lab .n{color:var(--accent)}
+  /* 도넛 */
+  .donut{display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .donut svg{width:132px;height:132px;flex:none}
+  .donut text{fill:var(--text);font-weight:800}
+  .leg{flex:1 1 150px;font-size:12.5px}
+  .leg div{display:flex;align-items:center;gap:7px;margin:4px 0}
+  .leg i{width:10px;height:10px;border-radius:3px;flex:none}
+  .leg b{margin-left:auto;font-variant-numeric:tabular-nums;white-space:nowrap}
+  /* 세로 막대 */
+  .cols{display:flex;gap:8px;align-items:flex-end;height:150px;margin-top:6px}
+  .col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
+  .col u{display:block;width:100%;border-radius:6px 6px 0 0;background:var(--s1);transition:height .5s;min-height:2px}
+  .col em{font-style:normal;font-size:12px;font-weight:800;margin-bottom:3px}
+  .collab{display:flex;gap:8px;margin-top:6px}
+  .collab span{flex:1;text-align:center;font-size:11px;color:var(--grey);line-height:1.25;min-width:0}
+  /* 수요 갭 */
+  .gap{display:grid;grid-template-columns:minmax(110px,1.1fr) 3fr auto;gap:6px 10px;align-items:center;margin:8px 0;font-size:13px}
+  .gap .bars{display:flex;flex-direction:column;gap:3px}
+  .gap u{display:block;height:8px;border-radius:99px;transition:width .5s}
+  .gap .now{background:var(--s5)}.gap .wantb{background:var(--s1)}
+  .gap .d{font-weight:800;font-size:12px;min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+  .d.up{color:#1B8A5A}.d.dn{color:var(--accent)}.d.eq{color:var(--grey)}
+  .key{display:flex;gap:14px;font-size:11.5px;color:var(--grey);margin-bottom:6px}
+  .key i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+  /* 한마디 */
+  .cm h2{font-size:13px;letter-spacing:.08em;color:var(--grey);margin:26px 0 10px;font-weight:800}
+  .cm ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .cm li{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--navy);
+         border-radius:8px;padding:10px 12px;font-size:13.5px}
+  .empty{text-align:center;padding:60px 20px;color:var(--grey)}
+  .warn{background:#FFF7E6;border:1px solid #F0D9A8;color:#7A5A12;padding:11px;border-radius:8px;font-size:13px;margin:14px 0}
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#14171C;--card:#1C2027;--line:#2C323B;--text:#E8EAEE;--grey:#9AA2AF;--track:#2C323B;
+      --navy:#9DB8E8;--navy2:#9DB8E8;--accent:#FF7B72;
+      --l1:#2A3B5E;--l2:#3D5F9E;--l3:#5B84CC;--l4:#8FB0EE;
+      --s1:#6C9AE8;--s2:#4DBBAE;--s3:#F0B35A;--s4:#E27C78;--s5:#7A8394;
+      color-scheme:dark;
+    }
+    :root:not([data-theme="light"]) .lv.l1{color:#E8EAEE}
+    :root:not([data-theme="light"]) .lv.l4{color:#0F1A33}
+  }
+</style>
 </head>
-<body class="text-slate-800 min-h-screen flex flex-col">
-
-<nav>
-    <div class="navin">
-        <div class="brand">
-            <div class="bslogo">BS</div>
-            <div>
-                <h1 class="bs-t">AI 사용 현황</h1>
-                <p class="bs-s">📄 설문 결과 — 실시간 집계</p>
-            </div>
-        </div>
-        <div class="navbtns">
-                    <a href="/" class="tip" title="설문지로 이동">📝 설문지</a>
-                    <button class="live" id="refreshBtn" title="최신 결과로 갱신" style="cursor:pointer">🔄 갱신</button>
-                </div>
-            </div>
-        </nav>
-
-<main>
-    <div class="sumrow fadein">
-        <div>
-            <h2>설문 결과</h2>
-            <p>🔄 구글 시트 연동 · <span id="upd">연결 중…</span></p>
-        </div>
-        <div class="totbox">
-            <span class="lab">총 응답자</span>
-            <span><b id="tot">0</b><span class="u">명</span></span>
-        </div>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="kicker">BYUCKSAN</div>
+      <h1>AI 활용 교육 사전 설문 — 실시간 결과</h1>
+      <div class="live"><span class="dot"></span><span id="upd">연결 중…</span></div>
+      <div class="sess"><label for="sel">설문 회차</label>
+        <select id="sel"></select><span id="st"></span></div>
     </div>
-
-    <div id="warn"></div>
-    <div id="levelBox"></div>
-
-    <!-- Row 2: Service(bar) + freq/sub(doughnut) -->
-    <div class="row2" id="row2"></div>
-
-    <!-- Row 3: use(progress) + security(chips) -->
-    <div class="row2" id="row3"></div>
-
-    <div class="gcard cm" id="cmbox" style="display:none"></div>
-    </main>
-
-    <!-- 레벨 기준 팝업 -->
-    <div class="modal" id="levelModal" onclick="if(event.target===this)closeLevelModal()">
-        <div class="modal-panel">
-            <div class="modal-head">
-                <h3>📏 사용자 레벨 판정 기준</h3>
-                <button class="modal-close" onclick="closeLevelModal()" aria-label="닫기">✕</button>
-            </div>
-            <div class="modal-body" id="levelModalBody"></div>
-        </div>
-    </div>
-
-    <footer>© 2026 Byucksan Corp — 결과는 [🔄 갱신] 버튼으로 최신화</footer>
+    <div class="total"><b id="tot">0</b><span>응답</span></div>
+  </header>
+  <div id="warn"></div>
+  <div id="board"></div>
+  <div class="cm" id="cmbox"></div>
+</div>
 
 <script>
-const esc = s => String(s||'').replace(/[<>&]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]));
-const pct = (n, b) => b > 0 ? Math.round(n / b * 100) : 0;
-const NAVY='#1F3864', SL='#f1f5f9', BLUE='#3b82f6', EMERALD='#10b981', AMBER='#f59e0b';
-let charts = {};
+const $ = id => document.getElementById(id);
+const esc = t => String(t).replace(/[<>&"]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
+const pct = (n, base) => base > 0 ? Math.round(n / base * 100) : 0;
+const SER = ['var(--s1)','var(--s2)','var(--s3)','var(--s4)','var(--s5)'];
 
-/* ── 순서형 값(≥0)에 대한 squarified treemap 레이아웃 ── */
-function squarify(items, x, y, w, h, out){
-    if (!items.length) return;
-    if (items.length === 1){ out.push({...items[0], x, y, w, h}); return; }
-    const total = items.reduce((s,d)=>s+d.value,0);
-    const scale = (w*h)/total;
-    const scaled = items.map(d=>({...d, area:d.value*scale}));
-    const shortSide = Math.min(w,h);
-    const worst = row => {
-        const sum = row.reduce((s,r)=>s+r.area,0);
-        const rmax = Math.max(...row.map(r=>r.area)), rmin = Math.min(...row.map(r=>r.area));
-        return Math.max((shortSide*shortSide*rmax)/(sum*sum), (sum*sum)/(shortSide*shortSide*rmin));
-    };
-    let row = [scaled[0]], i = 1;
-    while (i < scaled.length){
-        const testRow = row.concat([scaled[i]]);
-        if (worst(testRow) <= worst(row)){ row = testRow; i++; } else break;
-    }
-    const rowSum = row.reduce((s,r)=>s+r.area,0);
-    let nx=x, ny=y, nw=w, nh=h, offset=0;
-    if (w >= h){
-        const rowW = rowSum / h;
-        row.forEach(r=>{ const rh = h*(r.area/rowSum); out.push({...r, x, y:y+offset, w:rowW, h:rh}); offset += rh; });
-        nx = x+rowW; nw = w-rowW;
-    } else {
-        const rowH = rowSum / w;
-        row.forEach(r=>{ const rw = w*(r.area/rowSum); out.push({...r, x:x+offset, y, w:rw, h:rowH}); offset += rw; });
-        ny = y+rowH; nh = h-rowH;
-    }
-    squarify(scaled.slice(row.length), nx, ny, nw, nh, out);
+// ── 교육과정 Level (교육계획서 3.1) ─────────────────────────────
+// 설문 6번 「내 AI 활용 수준」 선택지(0~4)를 교육 Level 1~4로 옮긴다.
+//   거의 안 써 봤다·질문하고 답을 받는 정도 → L1, 파일 요약·정리 → L2,
+//   여러 단계 작업을 연결 → L3, 업무 흐름을 맡겨 둔다 → L4
+const LEVELS = [
+  { cls:'l1', nm:'LEVEL 1', tt:'자료 검색·정리·리뷰', ds:'묻고 요약하고 검토한다', from:[0,1],
+    crit:'「거의 안 써 봤다」 또는 「질문하고 답을 받는 정도」', edu:'긴 자료 요약 · 시장·기업 조사 · 회의록 정리' },
+  { cls:'l2', nm:'LEVEL 2', tt:'자료 생성·바이브코딩', ds:'문서·표·간단한 도구를 만든다', from:[2],
+    crit:'「파일을 올려 요약·정리를 시킨다」', edu:'문서 초안 작성 · 보고서·슬라이드 · 바이브코딩 체험' },
+  { cls:'l3', nm:'LEVEL 3', tt:'에이전트 업무 활용', ds:'여러 단계 업무를 위임한다', from:[3],
+    crit:'「여러 단계 작업을 연결해서 시킨다」', edu:'파일 읽기·정리 · 문서 작성·저장 · 사람이 최종 확인' },
+  { cls:'l4', nm:'LEVEL 4', tt:'전문가', ds:'AI를 설계·개선하고 전파한다', from:[4],
+    crit:'「AI에게 업무 흐름을 맡겨 둔다」', edu:'업무별 전문 활용 · 직접 설계·개선 · 동료 코칭' },
+];
+// 교육계획서 2.2 시나리오별 Level 교육 비중(가안): 입문형=L1 응답자, 확산형=L2, 고도화형=L3·L4
+const WEIGHTS = { A:[50,30,15,5], B:[30,35,25,10], C:[10,30,40,20] };
+
+function levelSection(S){
+  const lv = S.level;
+  if (!lv || !lv.answered) return '';
+  const cnt = LEVELS.map(L => L.from.reduce((a, i) => a + (lv.options[i] ? lv.options[i].count : 0), 0));
+  const n = lv.answered;
+  const p = cnt.map(c => pct(c, n));
+  const never = lv.options[0] ? lv.options[0].count : 0;
+  const share = { A: cnt[0]/n, B: cnt[1]/n, C: (cnt[2]+cnt[3])/n };
+  const alloc = [0,1,2,3].map(i => Math.round(share.A*WEIGHTS.A[i] + share.B*WEIGHTS.B[i] + share.C*WEIGHTS.C[i]));
+  return `<h2 class="sec">AI 활용 Level 분포 (교육과정 기준)</h2>
+  <div class="card">
+    <div class="levels">${LEVELS.map((L,i) => `<div class="lv ${L.cls}" tabindex="0" aria-label="${L.nm} 기준: ${L.crit}">
+        <span class="i" aria-hidden="true">i</span>
+        <div class="tip"><b>${L.nm} 판정 기준</b>
+          <dl style="margin:0"><dt>설문 6번 응답</dt><dd>${L.crit}</dd>
+          <dt>교육 내용</dt><dd>${L.edu}</dd></dl></div>
+        <div><div class="nm">${L.nm}</div><div class="tt">${L.tt}</div><div class="ds">${L.ds}</div></div>
+        <div><div class="pc">${p[i]}<small>%</small></div><div class="nn">${cnt[i]}명${i===0 && never ? ` (거의 안 써 봄 ${never}명 포함)` : ''}</div></div>
+      </div>`).join('')}</div>
+    <div class="stack">${LEVELS.map((L,i) => `<i style="width:${p[i]}%;background:var(--${L.cls})"></i>`).join('')}</div>
+    <div class="note">응답 ${n}명 · 6번 「내 AI 활용 수준」 기준 · 카드에 마우스를 올리거나 누르면 Level별 기준이 보입니다</div>
+    <div class="note" style="margin-top:10px">예상 교육 시간 배분 (교육계획서 가안 비중을 응답 분포로 가중)</div>
+    <div class="alloc">${alloc.map((a,i) => `<div>Level ${i+1}<b>${a}%</b></div>`).join('')}</div>
+  </div>`;
 }
 
-/* ── 레벨 분포 (treemap — 타일 면적 ∝ 인원, 자연인 옅음 → 달인 진함) ── */
-function drawLevel(level){
-    const box = document.getElementById('levelBox');
-    if (!level || !level.counts || !(level.scored||0)){ box.innerHTML=''; return; }
-    const scored = level.scored;
-    const order = ['자연인','체험자','활용자','달인'];
-    const ramp = {'자연인':'var(--lv1)','체험자':'var(--lv2)','활용자':'var(--lv3)','달인':'var(--lv4)'};
-    const slot = {'자연인':1,'체험자':2,'활용자':3,'달인':4};
-    const emoji = k => (level.levels||[]).filter(x=>x.key===k)[0]?.emoji || '';
-    const present = order.filter(k => (level.counts[k]||0) > 0);
-    const zero = order.filter(k => !(level.counts[k]||0));
-    const maxCount = Math.max(...present.map(k=>level.counts[k]));
-
-    box.innerHTML = `<div class="gcard fadein d1">
-            <h3>🏅 사용자 레벨 분포<span class="sub">자동 집계 · ${scored}명</span><button class="levelbtn" onclick="openLevelModal()">📏 기준 보기</button></h3>
-            <div class="lvtreemap" id="lvTreemap"></div>
-            ${zero.length ? `<div class="lvzero">${zero.map(k=>
-              `<span class="lvzchip"><span class="emoji">${emoji(k)}</span>${k} 0명 (0%)</span>`).join('')}</div>` : ''}
-          </div>`;
-
-    const tm = document.getElementById('lvTreemap');
-    const w = tm.clientWidth, h = tm.clientHeight;
-    const items = present.map(k => ({ key:k, value: level.counts[k] }))
-                          .sort((a,b) => b.value - a.value);
-    const rects = [];
-    squarify(items, 0, 0, w, h, rects);
-
-    tm.innerHTML = rects.map(r => {
-        const p = Math.round(r.value/scored*100), isTop = r.value === maxCount;
-        const size = r.w >= 90 && r.h >= 64 ? 'big' : (r.w >= 46 && r.h >= 40 ? 'mid' : 'tiny');
-        const label = size === 'big'
-          ? `<span class="nm"><span class="emoji">${emoji(r.key)}</span>${r.key}${isTop?'<span class="badge">최다</span>':''}</span>
-             <span class="val">${r.value}명<span class="p">(${p}%)</span></span>`
-          : size === 'mid'
-          ? `<span class="nm"><span class="emoji">${emoji(r.key)}</span>${r.value}명</span>`
-          : `<span class="emoji">${emoji(r.key)}</span>`;
-        return `<div class="lvtile ${size}" data-lv="${slot[r.key]}"
-                     style="left:${r.x}px;top:${r.y}px;width:${r.w}px;height:${r.h}px;background:${ramp[r.key]}">
-                  ${label}
-                </div>`;
-    }).join('');
-    }
-
-    /* ── 레벨 기준 팝업 ── */
-    const LEVEL_CRITERIA = `
-      <div class="crit">
-        <h4>1️⃣ 사용 빈도</h4>
-        <p>하루에 여러 번 <score>+5</score> · 하루 1회 정도 <score>+3</score> · 주 2~3회 <score>+2</score> · 주 1회 미만 <score>+1</score></p>
-      </div>
-      <div class="crit fastfail">
-        <h4>⚡ 즉시 자연인</h4>
-        <p>사용 빈도가 <b>거의 안 씀</b>이면 다른 항목과 관계없이 <b>자연인</b>으로 판정됩니다.</p>
-      </div>
-      <div class="crit">
-        <h4>2️⃣ 유료 구독</h4>
-        <p>유료 사용(회사/개인) <score>+3</score> · 무료만 사용 <score>+1</score></p>
-      </div>
-      <div class="crit">
-        <h4>3️⃣ 활용 용도 다양성</h4>
-        <p>4개 <score>+3</score> · 3개 <score>+2</score> · 1~2개 <score>+1</score></p>
-      </div>
-      <div class="crit">
-        <h4>4️⃣ 데이터 입력 적극성</h4>
-        <p>업무자료 외부 입력: 있다 <score>+2</score> · 민감하지 않은 자료만 <score>+1</score></p>
-      </div>
-      <div class="crit">
-        <h4>최종 판정 (총점)</h4>
-        <div class="threshold">
-          <div><span class="badge t4">≥10</span><b>달인 🏆</b></div>
-          <div><span class="badge t3">≥6</span><b>활용자 ⚙️</b></div>
-          <div><span class="badge t2">≥3</span><b>체험자 🔍</b></div>
-          <div><span class="badge t1">&lt;3</span><b>자연인 🍃</b></div>
-        </div>
-      </div>`;
-
-    function openLevelModal(){
-        const m = document.getElementById('levelModal');
-        document.getElementById('levelModalBody').innerHTML = LEVEL_CRITERIA;
-        m.classList.add('show');
-    }
-    function closeLevelModal(){
-        document.getElementById('levelModal').classList.remove('show');
-    }
-    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLevelModal(); });
-
-/* ── Chart 파괴·재생성 헬퍼 (중복 인스턴스 방지) ── */
-function chart(id, cfg){
-    if (charts[id]){ charts[id].destroy(); }
-    const el = document.getElementById(id);
-    if (!el) return;
-    charts[id] = new Chart(el.getContext('2d'), cfg);
+// ── 요약 지표 ────────────────────────────────────────────────
+function opt(S, id, labels){
+  const s = S[id]; if (!s) return [0, 0];
+  const c = s.options.filter(o => labels.includes(o.label)).reduce((a, o) => a + o.count, 0);
+  return [c, s.answered];
+}
+function tiles(S){
+  const defs = [
+    ['주 2회 이상 사용', opt(S,'freq',['하루에 여러 번','하루 1회 정도','주 2~3회'])],
+    ['유료 구독 중', S.paid ? [S.paid.anyPaid || 0, S.paid.answered] : [0, 0]],
+    ['에이전트 직접 사용', opt(S,'agent',['잘 알고 직접 쓴다'])],
+    ['업무 자료 외부 입력 경험', opt(S,'data',['있다','민감하지 않은 자료만'])],
+    ['교육 후 활용 의향', opt(S,'intent',['적극 쓰겠다','써 볼 것 같다'])],
+  ];
+  return `<h2 class="sec">한눈에 보기</h2><div class="tiles">${defs.map(([t,[c,n]]) => {
+    const p = pct(c, n);
+    return `<div class="tile"><b>${p}%</b><span>${t} · ${c}/${n}명</span><i><u style="width:${p}%"></u></i></div>`;
+  }).join('')}</div>`;
 }
 
-/* Row2: 서비스 가로 바 + freq/sub 도넛 */
-function row2(stats){
-    const box = document.getElementById('row2');
-    const by = {}; stats.forEach(s=>by[s.id]=s);
-    let html = '';
-
-    /* 서비스 카드 — 가로 바 차트 (Chart.js) */
-    if (by.tools){
-        html += `<div class="gcard fadein d2" style="grid-column:auto"><h3>💻 현재 쓰고 계신 AI 서비스<span class="sub">복수 응답</span></h3>
-          <div class="chart-wrap h260"><canvas id="serviceChart"></canvas></div></div>`;
-    }
-
-    /* 파생 카드: 사용빈도(순위 막대) + 유료구독(스택바·KPI) — 첨부 인포그래픽 스타일 */
-    const side = [];
-    if (by.freq){
-        const arr = by.freq.options;
-        const max = Math.max(...arr.map(o=>o.count),0);
-        const base = by.freq.answered || max || 1;
-        side.push(`<div>
-            <h4 style="margin:0 0 12px;font-size:13.5px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:6px">⏱️ 사용 빈도</h4>
-            <div style="display:flex;flex-direction:column;gap:11px">
-                ${arr.map(o=>{
-                    const w = max>0 && o.count>0 ? Math.round(o.count/max*100) : 0;
-                    const top = o.count===max && max>0;
-                    return `
-                    <div style="display:flex;align-items:center;gap:10px;${o.count===0?'opacity:.5':''}">
-                        <div style="width:78px;font-size:11.5px;font-weight:${top?800:600};color:${top?'#1e293b':'#64748b'};flex:0 0 auto">${esc(o.label)}</div>
-                        <div style="flex:1;height:9px;background:#f1f5f9;border-radius:99px;overflow:hidden">
-                            <div style="height:100%;background:${top?'#10b981':'#cbd5e1'};border-radius:99px;width:${w}%;box-shadow:${top?'0 0 8px rgba(16,185,129,.5)':'none'};transition:width .6s"></div>
-                        </div>
-                        <div style="width:34px;text-align:right;font-size:11.5px;font-weight:${top?800:600};color:${top?'#059669':'#94a3b8'};flex:0 0 auto">${o.count}명</div>
-                    </div>`;
-                }).join('')}
-            </div>`);
-    }
-    if (by.paid){
-        const arr = by.paid.options;
-        const base = by.paid.answered || Math.max(...arr.map(o=>o.count),0) || 1;
-        // 스택바 색 (회사·개인·무료·사용안함 순)
-        const stackColors = ['#6366f1','#3b82f6','#94a3b8','#cbd5e1'];
-        side.push(`<div style="border-top:1px solid #f1f5f9;padding-top:14px">
-            <h4 style="margin:0 0 10px;font-size:13.5px;font-weight:800;color:#1e293b;display:flex;align-items:center;gap:6px">💳 유료 구독 여부</h4>
-            <div style="display:flex;gap:0;height:12px;width:100%;background:#f1f5f9;border-radius:99px;overflow:hidden;margin-bottom:14px">
-                ${arr.map((o,i)=>`<div title="${esc(o.label)}: ${o.count}명" style="height:100%;background:${stackColors[i]||'#cbd5e1'};width:${Math.round(o.count/base*100)}%;transition:width .6s"></div>`).join('')}
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                ${arr.map((o,i)=>{
-                    const p = Math.round(o.count/base*100);
-                    const on = o.count>0;
-                    return `
-                    <div style="background:${on?'#eff6ff':'#f8fafc'};padding:8px 10px;border-radius:10px;border:1px solid ${on?'#bfdbfe':'#e2e8f0'};${on?'':'opacity:.6'}">
-                        <div style="font-size:10px;font-weight:700;color:${on?'#3b82f6':'#64748b'};margin-bottom:2px">${esc(o.label)}</div>
-                        <div style="font-size:14px;font-weight:800;color:${on?'#1d4ed8':'#475569'}">${o.count}명 <span style="font-size:10px;font-weight:600;color:${on?'#60a5fa':'#94a3b8'}">${p}%</span></div>
-                    </div>`;
-                }).join('')}
-            </div>`);
-    }
-    if (side.length){
-        html += `<div class="gcard fadein d3" style="display:flex;flex-direction:column;gap:16px">${side.join('')}</div>`;
-    }
-    box.innerHTML = html;
-
-    // 서비스 바 차트 (최다 항목 네이비 강조)
-    if (by.tools){
-        const max = Math.max(...by.tools.options.map(o=>o.count),0);
-        chart('serviceChart', {
-            type:'bar',
-            data:{ labels: by.tools.options.map(o=>o.label),
-                datasets:[{ label:'응답자', data: by.tools.options.map(o=>o.count),
-                    backgroundColor: by.tools.options.map(o=> o.count===max && max>0 ? NAVY : SL),
-                    borderRadius:6, barThickness:22 }]},
-            options:{ indexAxis:'y', plugins:{legend:{display:false}},
-                scales:{ x:{beginAtZero:true, ticks:{precision:0}, grid:{color:SL}, border:{display:false}},
-                         y:{grid:{display:false}, border:{display:false}, ticks:{color:'#475569',font:{weight:'600'}}} },
-                animation:{duration:800, easing:'easeOutQuart'} }
-        });
-    }
+// ── 차트 조각 ────────────────────────────────────────────────
+function head(s, kind){
+  return `<h3>${esc(s.title)}</h3><div class="meta">${kind} · 응답 ${s.answered}명</div>`;
 }
-
-/* Row3: use progress + agent/trust/data/support chips */
-function row3(stats){
-    const box = document.getElementById('row3');
-    const by = {}; stats.forEach(s=>by[s.id]=s);
-    let html='';
-
-    if (by.use){
-        const max = Math.max(...by.use.options.map(o=>o.count),0);
-        html += `<div class="gcard fadein d2"><h3>🎯 주로 쓰는 용도<span class="sub">복수 응답</span></h3>
-          ${by.use.options.map(o=>{
-            const p=pct(o.count, by.use.answered), top=max>0&&o.count===max;
-            return `<div class="row ${top?'top':''} ${o.count===0?'zero':''}">
-              <div class="lab"><span>${o.label}</span><span class="n">${o.count}명 (${p}%)</span></div>
-              <div class="track"><div class="fill" style="width:${p}%"></div></div></div>`;
-          }).join('')}
-        </div>`;
-    }
-
-    const secStats = stats.filter(s=>['agent','trust','data','support'].includes(s.id));
-    if (secStats.length){
-        html += `<div class="gcard fadein d3"><h3>🧠 AI 활용 인식·태도</h3>
-          ${secStats.map(s=>{
-            const max=Math.max(...s.options.map(o=>o.count),0);
-            return `<div class="mini-q"><h4>${esc(s.title)}</h4><div class="chips">
-              ${s.options.map(o=>{
-                const on=max>0&&o.count===max;
-                return `<span class="chip ${on?'on':''} ${o.count===0?'zero':''}">${esc(o.label)} (${o.count}명)</span>`;
-              }).join('')}</div></div>`;
-          }).join('')}
-        </div>`;
-    }
-    box.innerHTML = html;
+function donut(s){
+  const n = s.answered, R = 52, C = 2*Math.PI*R;
+  let off = 0, arcs = '';
+  s.options.forEach((o, i) => {
+    const len = n ? o.count / n * C : 0;
+    arcs += `<circle r="${R}" cx="66" cy="66" fill="none" stroke="${SER[i % SER.length]}" stroke-width="18"
+      stroke-dasharray="${len} ${C-len}" stroke-dashoffset="${-off}" transform="rotate(-90 66 66)"/>`;
+    off += len;
+  });
+  const top = s.options.reduce((a, o) => o.count > a.count ? o : a, s.options[0]);
+  return `<div class="card">${head(s,'단일 응답')}<div class="donut">
+    <svg viewBox="0 0 132 132" role="img" aria-label="${esc(s.title)}">
+      <circle r="${R}" cx="66" cy="66" fill="none" stroke="var(--track)" stroke-width="18"/>${arcs}
+      <text x="66" y="71" text-anchor="middle" font-size="22">${n ? pct(top.count, n) : 0}%</text></svg>
+    <div class="leg">${s.options.map((o,i) => `<div><i style="background:${SER[i % SER.length]}"></i>${esc(o.label)}<b>${o.count}명 · ${pct(o.count,n)}%</b></div>`).join('')}</div>
+  </div></div>`;
+}
+function columns(s){
+  const max = Math.max(...s.options.map(o => o.count), 1), n = s.answered;
+  return `<div class="card">${head(s,'단일 응답')}
+    <div class="cols">${s.options.map(o => `<div class="col"><em>${pct(o.count,n)}%</em>
+      <u style="height:${Math.max(o.count/max*100,1.5)}%"></u></div>`).join('')}</div>
+    <div class="collab">${s.options.map(o => `<span>${esc(o.label)}<br>${o.count}명</span>`).join('')}</div></div>`;
+}
+function bars(s, wide){
+  const max = Math.max(...s.options.map(o => o.count), 0);
+  const kind = s.type === 'multi' ? '복수 응답' : '단일 응답';
+  return `<div class="card${wide ? ' wide' : ''}">${head(s, kind)}` + s.options.map(o => {
+    const p = pct(o.count, s.answered), top = max > 0 && o.count === max ? ' top' : '';
+    return `<div class="row${top}"><div class="lab"><span>${esc(o.label)}</span>
+      <span class="n">${o.count}명 · ${p}%</span></div>
+      <div class="track"><div class="fill" style="width:${p}%"></div></div></div>`;
+  }).join('') + '</div>';
+}
+// 4번(지금 쓰는 용도)과 5번(앞으로 해결하고 싶은 업무)은 같은 목록 — 수요 갭을 한 화면에
+function gapChart(use, want){
+  const rows = use.options.map((o, i) => {
+    const a = pct(o.count, use.answered), b = pct(want.options[i].count, want.answered);
+    return { label:o.label, a, b, d:b - a };
+  }).sort((x, y) => y.b - x.b);
+  const mx = Math.max(...rows.flatMap(r => [r.a, r.b]), 1);
+  return `<div class="card wide"><h3>쓰는 용도 vs 앞으로 원하는 업무 — 교육 데모 주제 후보</h3>
+    <div class="meta">희망 비율이 높은 순 · 차이 = 희망 − 현재 (+가 클수록 교육 수요 큼)</div>
+    <div class="key"><span><i style="background:var(--s5)"></i>지금 쓴다 (${use.answered}명)</span><span><i style="background:var(--s1)"></i>앞으로 원한다 (${want.answered}명)</span></div>
+    ${rows.map(r => `<div class="gap"><span>${esc(r.label)}</span>
+      <div class="bars"><u class="now" style="width:${r.a/mx*100}%"></u><u class="wantb" style="width:${r.b/mx*100}%"></u></div>
+      <span class="d ${r.d>0?'up':r.d<0?'dn':'eq'}">${r.d>0?'+':''}${r.d}p<br><small style="font-weight:400;color:var(--grey)">${r.a}→${r.b}%</small></span></div>`).join('')}</div>`;
 }
 
 function draw(d){
-    document.getElementById('tot').textContent = d.total;
-    document.getElementById('upd').innerHTML =
-        '🔄 구글 시트 연동 · ' + new Date().toLocaleTimeString('ko-KR') +
-        (d.stale ? ' · <b style="color:#d97706">갱신 지연</b>' : '');
-    document.getElementById('warn').innerHTML = d.persisted ? '' :
-        '<div class="warn">⚠️ 저장소가 연결되지 않아 응답이 유지되지 않습니다.</div>';
+  drawSessions(d);
+  $('tot').textContent = d.total;
+  const bk = {redis:'Redis', memory:'메모리'}[d.backend] || '';
+  $('upd').textContent = '자동 갱신 · ' + new Date().toLocaleTimeString('ko-KR') + (bk ? ' · ' + bk : '');
+  $('warn').innerHTML = d.persisted ? '' :
+    '<div class="warn">저장소가 연결되지 않아 응답이 유지되지 않습니다. ' +
+    'Vercel Storage에서 Upstash Redis를 연결한 뒤 재배포해 주세요.</div>';
 
-    const row2el=document.getElementById('row2'), row3el=document.getElementById('row3'),
-          cm=document.getElementById('cmbox');
-    const stats = d.stats || [];
+  if (!d.total){
+    lastBoard = '';
+    $('board').innerHTML = !d.session
+      ? '<div class="empty">진행 중인 설문이 없습니다.<br>/admin.html 에서 설문을 시작해 주세요.</div>'
+      : '<div class="empty">아직 응답이 없습니다.<br>QR을 스캔해 참여해 주세요.</div>';
+    $('cmbox').innerHTML = '';
+    return;
+  }
 
-    if (!d.total){
-        row2el.innerHTML=''; row3el.innerHTML='';
-        Object.keys(charts).forEach(k=>{ charts[k].destroy(); });
-        charts={};
-        cm.style.display='none';
-        drawLevel(d.level);
-        return;
-    }
-    row2(stats); row3(stats);
+  const S = Object.fromEntries(d.stats.map(s => [s.id, s]));
+  let h = levelSection(S) + tiles(S);
 
-    if (d.comments && d.comments.length){
-        cm.style.display='';
-        cm.innerHTML=`<h3>💬 한마디<span class="sub">${d.comments.length}건</span></h3>
-          <ul>${d.comments.map(c=>`<li>${esc(c)}</li>`).join('')}</ul>`;
-    } else cm.style.display='none';
-    drawLevel(d.level);
+  h += '<h2 class="sec">AI 이용 현황</h2><div class="grid">';
+  if (S.tools) h += bars(S.tools);
+  if (S.paid) h += bars(S.paid);
+  if (S.freq) h += columns(S.freq);
+  h += '</div>';
+
+  h += '<h2 class="sec">활용 용도와 교육 수요</h2><div class="grid">';
+  if (S.use && S.want) h += gapChart(S.use, S.want);
+  h += '</div>';
+
+  h += '<h2 class="sec">에이전트 · 보안 · 교육 의향</h2><div class="grid">';
+  if (S.agent) h += donut(S.agent);
+  if (S.trust) h += bars(S.trust);
+  if (S.data) h += donut(S.data);
+  if (S.intent) h += donut(S.intent);
+  h += '</div>';
+
+  if (h !== lastBoard){ $('board').innerHTML = h; lastBoard = h; }   // 같으면 다시 그리지 않아 툴팁이 깜빡이지 않는다
+
+  $('cmbox').innerHTML = d.comments && d.comments.length
+    ? `<h2>한마디 (${d.comments.length})</h2><ul>` + d.comments.map(c => `<li>${esc(c)}</li>`).join('') + '</ul>'
+    : '';
 }
 
-let lastGood=null;
+let lastBoard = '';
+let chosen = '';   // 사용자가 고른 회차 (비어 있으면 서버가 진행 중/최근 회차를 고른다)
+$('sel').addEventListener('change', e => { chosen = e.target.value; tick(); });
+
+function drawSessions(d){
+  const cur = d.session ? d.session.id : '';
+  $('sel').innerHTML = (d.sessions || []).map(x =>
+    `<option value="${esc(x.id)}"${x.id === cur ? ' selected' : ''}>${esc(x.label)}${x.id === d.active ? ' (진행 중)' : ''}</option>`
+  ).join('') || '<option>회차 없음</option>';
+  $('st').textContent = !d.session ? '설문을 시작하지 않았습니다'
+    : d.session.id === d.active ? '● 접수 중' : '■ 종료됨 — 더 이상 변하지 않습니다';
+}
+
 async function tick(){
-    try{
-        const r = await fetch('/api/stats', { cache:'no-store' });
-        if (!r.ok) throw new Error('HTTP '+r.status);
-        const j = await r.json();
-        if (j && j.total!==undefined){ draw(j); lastGood=j; }
-        else if (lastGood) draw({...lastGood, stale:true});
-    }catch(e){
-        if (lastGood) draw({...lastGood, stale:true});
-        else document.getElementById('upd').textContent='연결 오류 — 재시도 중';
-    }
+  try{
+    const r = await fetch('/api/stats?t=' + Date.now() + (chosen ? '&session=' + encodeURIComponent(chosen) : ''), { cache:'no-store' });
+    draw(await r.json());
+  }catch(e){
+    $('upd').textContent = '연결 오류 — 재시도 중';
+  }
 }
 tick();
-
-// 수동 갱신 버튼 — 자동 4초 갱신 제거 (깜박임 방지)
-document.getElementById('refreshBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('refreshBtn');
-    btn.disabled = true; btn.textContent = '⏳ 갱신 중…';
-    await tick();
-    btn.disabled = false; btn.innerHTML = '🔄 갱신';
-});
+setInterval(tick, 4000);
+// 뒤로가기(bfcache)·탭 복귀 시 이전 화면이 보이지 않도록 즉시 다시 불러온다
+window.addEventListener('pageshow', e => { if (e.persisted) tick(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
 </script>
 </body>
 </html>

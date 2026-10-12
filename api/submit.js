@@ -1,6 +1,5 @@
-import { push, hasStore } from "./_store.js";
+import { push, hasStore, getActive } from "./_store.js";
 import { QUESTIONS } from "./_questions.js";
-import { calculateScore, LEVELS } from "./_level.js";
 
 const IDS = new Set(QUESTIONS.map((q) => q.id));
 
@@ -10,6 +9,11 @@ export default async function handler(req, res) {
     return;
   }
   try {
+    const active = await getActive();
+    if (!active) {
+      res.status(403).json({ error: "지금은 설문을 받지 않습니다" });
+      return;
+    }
     const body =
       typeof req.body === "string" ? JSON.parse(req.body || "{}") : req.body || {};
 
@@ -35,15 +39,8 @@ export default async function handler(req, res) {
     const record = { at: new Date().toISOString(), answers };
     if (comment) record.comment = comment;
 
-    const n = await push(record);
-    const { score, levelKey } = calculateScore(answers);
-    const levelMeta = LEVELS.find((L) => L.key === levelKey);
-    res.status(200).json({
-      ok: true,
-      count: n,
-      persisted: hasStore,
-      level: { key: levelKey, score, emoji: levelMeta?.emoji, desc: levelMeta?.desc },
-    });
+    const n = await push(active, record);
+    res.status(200).json({ ok: true, count: n, persisted: hasStore });
   } catch (e) {
     res.status(500).json({ error: String(e.message || e) });
   }
